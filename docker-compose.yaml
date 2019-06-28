@@ -1,0 +1,80 @@
+version: "2.1"
+
+networks:
+  pharmeum:
+
+services:
+  pharmeum-payment-postgres:
+    image: postgres:11.4-alpine
+    container_name: pharmeum-payment-postgres
+    ports:
+      - 5433:5432
+    environment:
+      - POSTGRES_DB=payment
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+    networks:
+      - pharmeum
+
+  pharmeum-payment-api-migrator:
+    container_name: pharmeum-payment-api-migrator
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - PHARMEUM_API_HOST=pharmeum-payment-api
+      - PHARMEUM_API_PORT=8080
+      - PHARMEUM_API_SSL=true
+      - PHARMEUM_API_SERVER_CERT_PATH=./certs/cert.pem
+      - PHARMEUM_API_SERVER_CERT_KEY=./certs/key.pem
+      - PHARMEUM_EMAIL_ADDRESS=test111ua@gmail.com
+      - PHARMEUM_EMAIL_PASSWORD=10203040tesT
+      - PHARMEUM_WEBSITE_URL=http://localhost:3000
+      - PHARMEUM_DATABASE_NAME=payment
+      - PHARMEUM_DATABASE_HOST=pharmeum-payment-postgres
+      - PHARMEUM_DATABASE_PORT=5433
+      - PHARMEUM_DATABASE_USER=postgres
+      - PHARMEUM_DATABASE_PASSWORD=$POSTGRES_PASSWORD
+      - PHARMEUM_DATABASE_SSL=disable
+      - PHARMEUM_AUTHENTICATION_SECRET=SAERGJJ5GD7FIIJUMJBASY5MCAS7MMVE3XOYOWOHQPRQRVN4VGRW44UN
+    command: bash -c "./payment-api migrate up"
+    depends_on:
+      pharmeum-payment-postgres:
+        condition: service_healthy
+    networks:
+      - pharmeum
+
+  pharmeum-payment-api:
+    container_name: pharmeum-payment-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - PHARMEUM_API_HOST=pharmeum-payment-api
+      - PHARMEUM_API_PORT=8081
+      - PHARMEUM_API_SSL=true
+      - PHARMEUM_API_SERVER_CERT_PATH=./certs/cert.pem
+      - PHARMEUM_API_SERVER_CERT_KEY=./certs/key.pem
+      - PHARMEUM_DATABASE_NAME=payment
+      - PHARMEUM_DATABASE_HOST=pharmeum-payment-postgres
+      - PHARMEUM_DATABASE_PORT=5433
+      - PHARMEUM_DATABASE_USER=postgres
+      - PHARMEUM_DATABASE_PASSWORD=$POSTGRES_PASSWORD
+      - PHARMEUM_DATABASE_SSL=disable
+      - PHARMEUM_AUTHENTICATION_SECRET=SAERGJJ5GD7FIIJUMJBASY5MCAS7MMVE3XOYOWOHQPRQRVN4VGRW44UN
+      - API_LOG_LEVEL=debug
+    ports:
+      - 8081:8081
+    command: bash -c "./payment-api run"
+    depends_on:
+      pharmeum-payment-postgres:
+        condition: service_healthy
+    networks:
+      - pharmeum

@@ -24,6 +24,11 @@ func UserWallets(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if len(wallets) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	response, err := json.Marshal(&wallets)
 	if err != nil {
 		Log(r).WithError(err).Errorf("failed to serialize user(%d) wallets", userID)

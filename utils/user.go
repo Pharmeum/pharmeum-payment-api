@@ -16,5 +16,5 @@ func UserID(ctx context.Context) uint64 {
 		return 0
 	}
 
-	return userID.(uint64)
+	return uint64(userID.(float64))
 }

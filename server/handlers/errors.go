@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	ErrInvalidToken = errors.New("invalid token")
+	ErrInvalidToken      = errors.New("invalid token")
+	ErrInvalidWalletKind = errors.New("invalid wallet kind, supported patient and doctor wallets")
 )
 
 func ErrResponse(code int, err error) []byte {

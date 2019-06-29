@@ -5,11 +5,15 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/stellar/go/support/log"
+
 	"github.com/Pharmeum/pharmeum-payment-api/utils"
 )
 
 //UserWallets returns list of user wallets
 func UserWallets(w http.ResponseWriter, r *http.Request) {
+	log := log.WithField("handler", "user_wallets")
+
 	userID := utils.UserID(r.Context())
 	if userID == 0 {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -31,7 +35,7 @@ func UserWallets(w http.ResponseWriter, r *http.Request) {
 
 	response, err := json.Marshal(&wallets)
 	if err != nil {
-		Log(r).WithError(err).Errorf("failed to serialize user(%d) wallets", userID)
+		log.WithError(err).Errorf("failed to serialize user(%d) wallets", userID)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

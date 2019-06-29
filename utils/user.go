@@ -2,39 +2,19 @@ package utils
 
 import (
 	"context"
-	"fmt"
-
-	"github.com/Pharmeum/pharmeum-payment-api/db"
-
-	"github.com/pkg/errors"
 
 	"github.com/go-chi/jwtauth"
 )
 
-func ErrResponse(code int, err error) []byte {
-	return []byte(fmt.Sprintf(`{"code": %d, "error": "%s"}`, code, err.Error()))
-}
+const userIDKey = "id"
 
-var (
-	ErrInvalidSession         = errors.New("invalid session")
-	ErrInvalidEmailOrPassword = errors.New("invalid email or password")
-)
-
-func User(ctx context.Context, db *db.DB) (*db.User, string, error) {
-	token, claims, _ := jwtauth.FromContext(ctx)
-	userEmail, ok := claims["user_email"].(string)
+//UserID provided from request context, takes ID from JWT claims
+func UserID(ctx context.Context) uint64 {
+	_, claims, _ := jwtauth.FromContext(ctx)
+	userID, ok := claims[userIDKey]
 	if !ok {
-		return nil, "", ErrInvalidSession
+		return 0
 	}
 
-	dbUser, err := db.GetUser(userEmail)
-	if err != nil {
-		return nil, "", err
-	}
-
-	if dbUser == nil {
-		return nil, "", ErrInvalidEmailOrPassword
-	}
-
-	return dbUser, token.Raw, nil
+	return userID.(uint64)
 }

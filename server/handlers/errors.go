@@ -1,14 +1,13 @@
 package handlers
 
 import (
-	"errors"
 	"fmt"
+
+	"github.com/pkg/errors"
 )
 
 var (
-	ErrEmptyRequestToken      = errors.New("request token should not be empty")
-	ErrEmptyPassword          = errors.New("password should not be empty")
-	ErrInvalidEmailOrPassword = errors.New("invalid email or password")
+	ErrInvalidToken = errors.New("invalid token")
 )
 
 func ErrResponse(code int, err error) []byte {

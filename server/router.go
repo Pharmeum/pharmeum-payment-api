@@ -45,7 +45,12 @@ func Router(
 	)
 
 	router.Route("/user", func(router chi.Router) {
+		router.Use(
+			jwtauth.Verifier(jwtAuth),
+			jwtauth.Authenticator,
+		)
 
+		router.Get("/wallets", handlers.UserWallets)
 	})
 
 	return router

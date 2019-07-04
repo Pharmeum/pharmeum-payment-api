@@ -65,7 +65,6 @@ type EnrollCredentials struct {
 // CAConfig defines a CA configuration
 type CAConfig struct {
 	URL              string
-	GRPCOptions      map[string]interface{}
 	Registrar        EnrollCredentials
 	CAName           string
 	TLSCAServerCerts [][]byte

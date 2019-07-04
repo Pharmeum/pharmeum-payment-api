@@ -39,7 +39,7 @@ func (m *MockSigningIdentity) Verify(msg []byte, sig []byte) error {
 
 // Serialize converts an identity to bytes
 func (m *MockSigningIdentity) Serialize() ([]byte, error) {
-	return []byte(m.id + m.mspid), nil
+	return []byte("test"), nil
 }
 
 // SetEnrollmentCertificate sets yhe enrollment certificate.

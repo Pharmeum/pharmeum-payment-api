@@ -33,27 +33,17 @@ declare -a PKGS=(
     "common/channelconfig"
     "common/attrmgr"
     "common/ledger"
-    "common/metrics"
-    "common/metrics/disabled"
-    "common/metrics/internal/namer"
-    "common/metrics/prometheus"
-    "common/metrics/statsd"
-    "common/metrics/statsd/goruntime"
-
-    "core/comm"
-    "core/middleware"
-    "core/operations"
 
     "sdkpatch/logbridge"
-    "sdkpatch/logbridge/httpadmin"
     "sdkpatch/cryptosuitebridge"
-    "sdkpatch/cachebridge"
 
-    "core/common/privdata"
     "core/ledger/kvledger/txmgmt/version"
     "core/ledger/util"
 
+    "events/consumer"
+
     "msp"
+    "msp/cache"
 
     "discovery/client"
     "gossip/util"
@@ -90,7 +80,6 @@ declare -a FILES=(
     "bccsp/sw/fileks.go"
     "bccsp/sw/hash.go"
     "bccsp/sw/impl.go"
-    "bccsp/sw/inmemoryks.go"
     "bccsp/sw/internals.go"
     "bccsp/sw/keyderiv.go"
     "bccsp/sw/keygen.go"
@@ -105,12 +94,10 @@ declare -a FILES=(
     "bccsp/utils/slice.go"
     "bccsp/utils/x509.go"
     "bccsp/utils/ecdsa.go"
-
-    "core/comm/config.go"
-
     "common/crypto/random.go"
     "common/crypto/signer.go"
 
+    "common/util/utils.go"
     "common/attrmgr/attrmgr.go"
 
     "common/channelconfig/applicationorg.go"
@@ -121,32 +108,16 @@ declare -a FILES=(
     "common/channelconfig/organization.go"
 
     "common/ledger/ledger_interface.go"
-
-    "common/metrics/disabled/provider.go"
-    "common/metrics/internal/namer/namer.go"
-    "common/metrics/prometheus/provider.go"
-    "common/metrics/provider.go"
-    "common/metrics/statsd/goruntime/collector.go"
-    "common/metrics/statsd/goruntime/metrics.go"
-    "common/metrics/statsd/provider.go"
-
-    "core/middleware/chain.go"
-    "core/middleware/request_id.go"
-    "core/middleware/require_cert.go"
-    "core/operations/metrics.go"
-    "core/operations/system.go"
-    "core/operations/tls.go"
-
-    "common/util/utils.go"
-
+    
     "sdkpatch/logbridge/logbridge.go"
-    "sdkpatch/logbridge/httpadmin/spec.go"
     "sdkpatch/cryptosuitebridge/cryptosuitebridge.go"
-    "sdkpatch/cachebridge/cache.go"
 
-    "core/common/privdata/collection.go"
     "core/ledger/ledger_interface.go"
     "core/ledger/kvledger/txmgmt/version/version.go"
+
+
+    "events/consumer/adapter.go"
+    "events/consumer/consumer.go"
 
     "msp/factory.go"
     "msp/cert.go"
@@ -157,11 +128,11 @@ declare -a FILES=(
     "msp/mspmgrimpl.go"
     "msp/mspimplsetup.go"
     "msp/mspimplvalidate.go"
+    "msp/cache/cache.go"
 
     "discovery/client/api.go"
     "discovery/client/client.go"
     "discovery/client/selection.go"
-    "discovery/client/signer.go"
 
     "gossip/util/misc.go"
 )
@@ -185,82 +156,6 @@ gofilter() {
         > "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
 } 
 
-echo "Modifying go source files"
-FILTER_FILENAME="bccsp/pkcs11/impl.go"
-sed -i'' -e '/"math\/big"/a sdkp11 "github.com\/hyperledger\/fabric-sdk-go\/pkg\/core\/cryptosuite\/common\/pkcs11"' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-START_LINE=`grep -n "lib := opts.Library" "${TMP_PROJECT_PATH}/${FILTER_FILENAME}" | head -n 1 | awk -F':' '{print $1}'`
-for i in {1..12}
-do
-    sed -i'' -e ${START_LINE}'d' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-done
-sed -i "$START_LINE i \/\/Load PKCS11 context handle" "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-let "START_LINE+=1"
-sed -i "$START_LINE i pkcs11Ctx, err := sdkp11.LoadContextAndLogin(opts.Library, opts.Pin, opts.Label)" "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-let "START_LINE+=1"
-sed -i "$START_LINE i if err != nil {return nil, errors.Wrapf(err, \"Failed initializing PKCS11 context\")}" "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-let "START_LINE+=1"
-sed -i "$START_LINE i csp := &impl{BCCSP: swCSP, conf: conf, ks: keyStore, softVerify: opts.SoftVerify, pkcs11Ctx: pkcs11Ctx}" "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-
-START_LINE=`grep -n "type impl struct {" "${TMP_PROJECT_PATH}/${FILTER_FILENAME}" | head -n 1 | awk -F':' '{print $1}'`
-let "START_LINE+=6"
-for i in {1..5}
-do
-    sed -i'' -e ${START_LINE}'d' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-done
-
-sed -i "$START_LINE i pkcs11Ctx *sdkp11.ContextHandle" "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-
-FILTER_FILENAME="bccsp/pkcs11/pkcs11.go"
-sed -i'' -e '/"github.com\/hyperledger"/a "time"/' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e '/"math\/big"/a "github.com\/hyperledger\/fabric-sdk-go\/internal\/github.com\/hyperledger\/fabric\/sdkpatch\/cachebridge"' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e '/"math\/big"/a sdkp11 "github.com\/hyperledger\/fabric-sdk-go\/pkg\/core\/cryptosuite\/common\/pkcs11"' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e '/session = s/a cachebridge.ClearSession(fmt.Sprintf("%d", session))' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/= findKeyPairFromSKI(p11lib,/= csp.pkcs11Ctx.FindKeyPairFromSKI(/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/func findKeyPairFromSKI(mod/func (csp \*impl) findKeyPairFromSKI(mod/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-START_LINE=`grep -n "func (csp \*impl) findKeyPairFromSKI(mod" "${TMP_PROJECT_PATH}/${FILTER_FILENAME}" | head -n 1 | awk -F':' '{print $1}'`
-let "START_LINE+=1"
-for i in {1..27}
-do
-    sed -i'' -e ${START_LINE}'d' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-done
-sed -i'' -e '/func (csp \*impl) findKeyPairFromSKI(mod/a return cachebridge.GetKeyPairFromSessionSKI(&cachebridge.KeyPairCacheKey{Mod: mod, Session: session, SKI: ski, KeyType: keyType})' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e '/func (csp \*impl) findKeyPairFromSKI(mod/i \
-func timeTrack(start time.Time, msg string) {\
-	elapsed := time.Since(start)\
-	logger.Debugf("%s took %s", msg, elapsed)\
-}\
-
-' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/\"go.uber.org\/zap\/zapcore/logging\"github.com\/hyperledger\/fabric-sdk-go\/internal\/github.com\/hyperledger\/fabric\/sdkpatch\/logbridge/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/zapcore.DebugLevel/logging.DEBUG/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-
-START_LINE=`grep -n "func loadLib(lib, pin, label string)" "${TMP_PROJECT_PATH}/${FILTER_FILENAME}" | head -n 1 | awk -F':' '{print $1}'`
-for i in {1..97}
-do
-    sed -i'' -e ${START_LINE}'d' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-done
-
-sed -i'' -e 's/p11lib := csp.ctx//g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/session := csp.getSession()/session := csp.pkcs11Ctx.GetSession()/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/defer csp.returnSession(session)/defer csp.pkcs11Ctx.ReturnSession(session)/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/= ecPoint(p11lib/= ecPoint(csp.pkcs11Ctx/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/= p11lib.GenerateKeyPair(/= csp.pkcs11Ctx.GenerateKeyPair(/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/= p11lib.SetAttributeValue(/= csp.pkcs11Ctx.SetAttributeValue(/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/= p11lib.GetAttributeValue(session/= csp.pkcs11Ctx.GetAttributeValue(session/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/= p11lib.CreateObject(/= csp.pkcs11Ctx.CreateObject(/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/= p11lib.VerifyInit(session/= csp.pkcs11Ctx.VerifyInit(session/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/= p11lib.Verify(session/= csp.pkcs11Ctx.Verify(session/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/= p11lib.SignInit(session/= csp.pkcs11Ctx.SignInit(session/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/= p11lib.Sign(session/= csp.pkcs11Ctx.Sign(session/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/= p11lib.CopyObject(session/= csp.pkcs11Ctx.CopyObject(session/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/= p11lib.DestroyObject(session/= csp.pkcs11Ctx.DestroyObject(session/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/listAttrs(p11lib, session/listAttrs(csp.pkcs11Ctx, session/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/func listAttrs(p11lib \*pkcs11.Ctx,/func listAttrs(p11lib \*sdkp11.ContextHandle,/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/func ecPoint(p11lib \*pkcs11.Ctx,/func ecPoint(p11lib \*sdkp11.ContextHandle,/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/attr, err := csp.pkcs11Ctx.GetAttributeValue(session, key, template)/attr, err := p11lib.GetAttributeValue(session, key, template)/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/attr, err := csp.pkcs11Ctx.GetAttributeValue(session, obj, template)/attr, err := p11lib.GetAttributeValue(session, obj, template)/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e '/privateKey, err := csp.pkcs11Ctx.FindKeyPairFromSKI/a defer timeTrack(time.Now(), fmt.Sprintf("signing [session: %d]", session))' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-
 echo "Filtering Go sources for allowed functions ..."
 FILTERS_ENABLED="fn"
 
@@ -282,15 +177,10 @@ FILTER_FN=
 gofilter
 
 FILTER_FILENAME="common/util/utils.go"
-FILTER_FN="CreateUtcTimestamp,ConcatenateBytes,GenerateBytesUUID,GenerateIntUUID,GenerateUUID,idBytesToStr"
+FILTER_FN="GenerateIDfromTxSHAHash,ComputeSHA256,CreateUtcTimestamp,ConcatenateBytes"
 gofilter
-
-FILTER_FILENAME="core/comm/config.go"
-sed -i'' -e 's/flogging\.FabricLogger/flogging.Logger/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e '/MetricsProvider metrics\.Provider/ a\
-\/\/ HealthCheckEnabled enables the gRPC Health Checking Protocol for the server\
-	HealthCheckEnabled bool\
-' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
+sed -i'' -e 's/&bccsp.SHA256Opts{}/factory.GetSHA256Opts()/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
+sed -i'' -e 's/"github.com\/hyperledger\/fabric\/bccsp\/factory"/factory "github.com\/hyperledger\/fabric-sdk-go\/internal\/github.com\/hyperledger\/fabric\/sdkpatch\/cryptosuitebridge"/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
 
 FILTER_FILENAME="common/channelconfig/applicationorg.go"
 FILTER_FN=
@@ -317,19 +207,14 @@ FILTER_FILENAME="core/ledger/kvledger/txmgmt/version/version.go"
 FILTER_FN=
 gofilter
 
-FILTER_FILENAME="discovery/client/signer.go"
-cat >> ${TMP_PROJECT_PATH}/${FILTER_FILENAME} <<EOF
 
-func computeSHA256(data []byte) (hash []byte) {
-	hash, err := factory.GetDefault().Hash(data, factory.GetSHA256Opts())
-	if err != nil {
-		panic(fmt.Errorf("Failed computing SHA256 on [% x]", data))
-	}
-	return
-}
-EOF
-sed -i'' -e 's/util\.ComputeSHA256/computeSHA256/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/"github.com\/hyperledger\/fabric\/common\/util"/factory "github.com\/hyperledger\/fabric-sdk-go\/internal\/github.com\/hyperledger\/fabric\/sdkpatch\/cryptosuitebridge"/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
+FILTER_FILENAME="events/consumer/adapter.go"
+FILTER_FN=
+gofilter
+
+FILTER_FILENAME="events/consumer/consumer.go"
+FILTER_FN=
+gofilter
 
 FILTER_FILENAME="msp/factory.go"
 FILTER_FN=
@@ -355,8 +240,6 @@ sed -i'' -e '/"encoding\/hex/ a\
 sed -i'' -e 's/"github.com\/hyperledger\/fabric\/bccsp"/bccsp "github.com\/hyperledger\/fabric-sdk-go\/internal\/github.com\/hyperledger\/fabric\/sdkpatch\/cryptosuitebridge"/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
 sed -i'' -e 's/bccsp.Key/core.Key/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
 sed -i'' -e 's/bccsp.HashOpts/core.HashOpts/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/\"go.uber.org\/zap\/zapcore/logging\"github.com\/hyperledger\/fabric-sdk-go\/internal\/github.com\/hyperledger\/fabric\/sdkpatch\/logbridge/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
-sed -i'' -e 's/zapcore.DebugLevel/logging.DEBUG/g' "${TMP_PROJECT_PATH}/${FILTER_FILENAME}"
 
 FILTER_FILENAME="msp/msp.go"
 FILTER_FN=
@@ -460,9 +343,6 @@ FILTER_FILENAME="common/channelconfig/orderer.go"
 gofilter
 
 FILTER_FILENAME="common/channelconfig/organization.go"
-gofilter
-
-FILTER_FILENAME="common/util/utils.go"
 gofilter
 
 # Apply patching

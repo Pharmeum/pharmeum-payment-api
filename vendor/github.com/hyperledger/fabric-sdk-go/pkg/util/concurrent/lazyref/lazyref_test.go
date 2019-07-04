@@ -31,12 +31,12 @@ func ExampleReference_expiring() {
 			sequence++
 			return fmt.Sprintf("Data_%d", sequence), nil
 		},
-		WithIdleExpiration(200*time.Millisecond),
+		WithIdleExpiration(2*time.Second),
 	)
 
 	for i := 0; i < 5; i++ {
 		fmt.Println(ref.MustGet())
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(time.Second)
 	}
 }
 
@@ -50,12 +50,12 @@ func ExampleReference_refreshing() {
 			sequence++
 			return fmt.Sprintf("Data_%d", sequence), nil
 		},
-		WithRefreshInterval(InitImmediately, 200*time.Millisecond),
+		WithRefreshInterval(InitImmediately, 2*time.Second),
 	)
 
 	for i := 0; i < 5; i++ {
 		fmt.Println(ref.MustGet())
-		time.Sleep(300 * time.Millisecond)
+		time.Sleep(3 * time.Second)
 	}
 }
 
@@ -141,49 +141,6 @@ func TestMustGet(t *testing.T) {
 	}
 }
 
-func TestGetWithData(t *testing.T) {
-	var numTimesInitialized int32
-	expectedTimesInitialized := 1
-	concurrency := 100
-
-	ref := NewWithData(func(data interface{}) (interface{}, error) {
-		atomic.AddInt32(&numTimesInitialized, 1)
-		return data, nil
-	})
-
-	var wg sync.WaitGroup
-	wg.Add(concurrency)
-
-	var errors []error
-	var mutex sync.Mutex
-
-	for i := 0; i < concurrency; i++ {
-		data := fmt.Sprintf("Iter_%d", i)
-		go func() {
-			defer wg.Done()
-			value, err := ref.Get(data)
-			if err != nil {
-				panic(err.Error())
-			}
-			strVal := value.(string)
-			if strVal[0:5] != "Iter_" {
-				mutex.Lock()
-				errors = append(errors, fmt.Errorf("expecting value to be %s but got %s", data, value))
-				mutex.Unlock()
-			}
-		}()
-	}
-
-	wg.Wait()
-
-	if len(errors) > 0 {
-		t.Fatal(errors[0].Error())
-	}
-	if num := atomic.LoadInt32(&numTimesInitialized); num != int32(expectedTimesInitialized) {
-		t.Fatalf("expecting initializer to be called %d time(s) but was called %d time(s)", expectedTimesInitialized, num)
-	}
-}
-
 func TestMustGetPanic(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {
@@ -255,6 +212,8 @@ func TestGetWithFinalizer(t *testing.T) {
 	if len(errors) > 0 {
 		t.Fatalf(errors[0].Error())
 	}
+
+	time.Sleep(time.Second)
 }
 
 func TestExpiring(t *testing.T) {

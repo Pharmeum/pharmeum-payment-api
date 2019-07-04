@@ -44,8 +44,8 @@ func TestConnection(t *testing.T) {
 	conn.Close()
 }
 
-// Use the mock deliver server for testing
-var testServer *eventmocks.MockDeliverServer
+// Use the Event Hub server for testing
+var testServer *eventmocks.MockEventhubServer
 var endorserAddr []string
 
 func newMockContext() *fabmocks.MockContext {

@@ -278,6 +278,7 @@ func (cc *CachingConnector) ensureJanitorStarted() {
 		cc.waitgroup.Add(1)
 		go cc.janitor()
 	default:
+		logger.Debug("janitor already started")
 	}
 }
 
@@ -299,7 +300,6 @@ func (cc *CachingConnector) janitor() {
 	defer cc.waitgroup.Done()
 
 	ticker := time.NewTicker(cc.sweepTime)
-	defer ticker.Stop()
 	for {
 		select {
 		case <-cc.janitorDone:

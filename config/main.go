@@ -16,6 +16,7 @@ type Config interface {
 	Log() *logrus.Entry
 	DB() *db.DB
 	JWT() *jwtauth.JWTAuth
+	Channel() *channel.Client
 }
 
 type ConfigImpl struct {

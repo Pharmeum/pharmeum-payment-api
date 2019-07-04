@@ -16,7 +16,7 @@ import (
 )
 
 const configTestFilePath = "../../core/config/testdata/config_test.yaml"
-const entityMatcherTestFilePath = "../../core/config/testdata/config_test.yaml"
+const entityMatcherTestFilePath = "../../core/config/testdata/config_test_entity_matchers.yaml"
 const localOverrideEntityMatcher = "../../../test/fixtures/config/overrides/local_entity_matchers.yaml"
 
 func TestNetworkPeerConfigFromURL(t *testing.T) {
@@ -64,7 +64,7 @@ func TestSearchPeerConfigFromURL(t *testing.T) {
 		t.Fatalf("Unexpected error reading config: %s", err)
 	}
 
-	_, ok := sampleConfig.PeerConfig("peer0.org1.example.com")
+	peer0Org1, ok := sampleConfig.PeerConfig("peer0.org1.example.com")
 	assert.True(t, ok, "peerconfig search was expected to be successful")
 
 	//Positive scenario,
@@ -75,6 +75,7 @@ func TestSearchPeerConfigFromURL(t *testing.T) {
 	assert.NotNil(t, peerConfig, "supposed to get valid peerConfig by url :%s", testURL)
 	assert.Equal(t, testURL, peerConfig.URL)
 	assert.Nil(t, err, "supposed to get no error")
+	assert.Equal(t, peer0Org1.EventURL, peerConfig.EventURL)
 
 	// peerconfig should be found using actual URL
 	testURL2 := "peer0.org1.example.com:7051"
@@ -84,6 +85,8 @@ func TestSearchPeerConfigFromURL(t *testing.T) {
 	assert.NotNil(t, peerConfig, "supposed to get valid peerConfig by url :%s", testURL2)
 	assert.Equal(t, testURL, peerConfig.URL)
 	assert.Nil(t, err, "supposed to get no error")
+	assert.Equal(t, peer0Org1.EventURL, peerConfig.EventURL)
+
 }
 
 func TestMSPID(t *testing.T) {

@@ -8,6 +8,7 @@ package mocks
 
 import (
 	reqcontext "context"
+	"sort"
 	"sync"
 
 	discclient "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric/discovery/client"
@@ -81,12 +82,11 @@ func (r *response) ForChannel(string) discclient.ChannelResponse {
 func (r *response) ForLocal() discclient.LocalResponse {
 	return &localResponse{
 		peers: r.peers,
-		err:   r.err,
 	}
 }
 
 type channelResponse struct {
-	peers discclient.Endorsers
+	peers []*discclient.Peer
 	err   error
 }
 
@@ -96,26 +96,35 @@ func (cr *channelResponse) Config() (*discovery.ConfigResult, error) {
 }
 
 // Peers returns a response for a peer membership query, or error if something went wrong
-func (cr *channelResponse) Peers(invocationChain ...*discovery.ChaincodeCall) ([]*discclient.Peer, error) {
+func (cr *channelResponse) Peers() ([]*discclient.Peer, error) {
 	return cr.peers, cr.err
 }
 
 // Endorsers returns the response for an endorser query
-func (cr *channelResponse) Endorsers(invocationChain discclient.InvocationChain, f discclient.Filter) (discclient.Endorsers, error) {
+func (cr *channelResponse) Endorsers(invocationChain discclient.InvocationChain, ps discclient.PrioritySelector, ef discclient.ExclusionFilter) (discclient.Endorsers, error) {
 	if cr.err != nil {
 		return nil, cr.err
 	}
-	return f.Filter(cr.peers), nil
+
+	var endorsers discclient.Endorsers
+	for _, endorser := range cr.peers {
+		if !ef.Exclude(*endorser) {
+			endorsers = append(endorsers, endorser)
+		}
+	}
+
+	sortEndorsers(endorsers, ps)
+
+	return endorsers, nil
 }
 
 type localResponse struct {
 	peers []*discclient.Peer
-	err   error
 }
 
 // Peers returns a response for a peer membership query, or error if something went wrong
 func (cr *localResponse) Peers() ([]*discclient.Peer, error) {
-	return cr.peers, cr.err
+	return cr.peers, nil
 }
 
 // MockDiscoverEndpointResponse contains a mock response for the discover client
@@ -127,7 +136,7 @@ type MockDiscoverEndpointResponse struct {
 
 // Build builds a mock discovery response
 func (b *MockDiscoverEndpointResponse) Build() fabdiscovery.Response {
-	var peers discclient.Endorsers
+	var peers []*discclient.Peer
 	for _, endpoint := range b.PeerEndpoints {
 		peer := &discclient.Peer{
 			MSPID:            endpoint.MSPID,
@@ -171,4 +180,32 @@ func newStateInfoMessage(endpoint *discmocks.MockDiscoveryPeerEndpoint) *gossip.
 			},
 		},
 	}
+}
+
+func sortEndorsers(endorsers discclient.Endorsers, ps discclient.PrioritySelector) discclient.Endorsers {
+	sort.Sort(&endorserSort{
+		Endorsers:        endorsers,
+		PrioritySelector: ps,
+	})
+	return endorsers
+}
+
+type endorserSort struct {
+	discclient.Endorsers
+	discclient.PrioritySelector
+}
+
+func (es *endorserSort) Len() int {
+	return len(es.Endorsers)
+}
+
+func (es *endorserSort) Less(i, j int) bool {
+	e1 := es.Endorsers[i]
+	e2 := es.Endorsers[j]
+	less := es.Compare(*e1, *e2)
+	return less > discclient.Priority(0)
+}
+
+func (es *endorserSort) Swap(i, j int) {
+	es.Endorsers[i], es.Endorsers[j] = es.Endorsers[j], es.Endorsers[i]
 }

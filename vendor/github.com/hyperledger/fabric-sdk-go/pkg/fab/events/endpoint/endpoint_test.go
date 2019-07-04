@@ -10,14 +10,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 	clientmocks "github.com/hyperledger/fabric-sdk-go/pkg/fab/events/client/mocks"
 	fabmocks "github.com/hyperledger/fabric-sdk-go/pkg/fab/mocks"
 	mspmocks "github.com/hyperledger/fabric-sdk-go/pkg/msp/test/mockmsp"
 	"github.com/hyperledger/fabric-sdk-go/pkg/util/test"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -33,6 +31,7 @@ var p3 = fabmocks.NewMockPeer("p3", url3)
 var peers = []fab.Peer{p1, p2, p3}
 
 func TestEndpoint(t *testing.T) {
+	expectedEventURL := "localhost:7053"
 	expectedAllowInsecure := true
 	expectedFailfast := true
 	expectedKeepAliveTime := time.Second
@@ -44,6 +43,7 @@ func TestEndpoint(t *testing.T) {
 	peer := fabmocks.NewMockPeer("p1", "localhost:7051")
 	peerConfig := &fab.PeerConfig{
 		GRPCOptions: make(map[string]interface{}),
+		EventURL:    "localhost:7053",
 	}
 	peerConfig.GRPCOptions["allow-insecure"] = expectedAllowInsecure
 	peerConfig.GRPCOptions["fail-fast"] = expectedFailfast
@@ -52,6 +52,9 @@ func TestEndpoint(t *testing.T) {
 	peerConfig.GRPCOptions["keep-alive-permit"] = expectedKeepAlivePermit
 
 	endpoint := FromPeerConfig(config, peer, peerConfig)
+	if endpoint.EventURL() != expectedEventURL {
+		t.Fatalf("expecting eventURL %s but got %s", expectedEventURL, endpoint.EventURL())
+	}
 
 	opts := endpoint.Opts()
 	if len(opts) != expectedNumOpts {
@@ -65,7 +68,7 @@ func TestDiscoveryProvider(t *testing.T) {
 	expectedNumPeers := len(peers)
 
 	discoveryService, err := NewEndpointDiscoveryWrapper(ctx, "testchannel", clientmocks.NewDiscoveryService(peers...))
-	require.NoError(t, err, "error creating discovery wrapper")
+	assert.NoError(t, err, "error creating discovery wrapper")
 
 	peers, err = discoveryService.GetPeers()
 	if err != nil {
@@ -127,21 +130,16 @@ func newMockConfig(channelPeers ...fab.ChannelPeer) *mockConfig {
 	}
 }
 
-func (c *mockConfig) ChannelPeers(name string) []fab.ChannelPeer {
+func (c *mockConfig) ChannelPeers(name string) ([]fab.ChannelPeer, bool) {
 	test.Logf("mockConfig.ChannelPeers [%#v]", c.channelPeers)
-	return c.channelPeers
+	return c.channelPeers, true
 }
 
 func newMockContext() *fabmocks.MockContext {
 	ctx := fabmocks.NewMockContext(
 		mspmocks.NewMockSigningIdentity("user1", "Org1MSP"),
 	)
-
-	chPeer := fab.ChannelPeer{}
-	chPeer.URL = p2.URL()
-	chPeer.EventSource = true
-
-	ctx.SetEndpointConfig(newMockConfig(chPeer))
+	ctx.SetEndpointConfig(newMockConfig())
 	return ctx
 }
 

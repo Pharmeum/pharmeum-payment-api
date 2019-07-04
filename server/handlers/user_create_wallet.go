@@ -1,14 +1,17 @@
 package handlers
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"encoding/json"
 	"net/http"
+
+	"github.com/Pharmeum/pharmeum-payment-api/payment"
 
 	"github.com/Pharmeum/pharmeum-payment-api/utils"
 
 	"github.com/Pharmeum/pharmeum-payment-api/db"
-
-	"github.com/stellar/go/keypair"
 
 	validation "github.com/go-ozzo/ozzo-validation"
 )
@@ -38,9 +41,19 @@ func (u UserWalletsRequest) Validate() error {
 	}.Filter()
 }
 
-//UserCreateWallet creates user wallet with Stellar public Key
-//Two optionals types: doctor and patient
+func newWalletAddress() (string, error) {
+	curve := elliptic.P256()
+	private, err := ecdsa.GenerateKey(curve, rand.Reader)
+	if err != nil {
+		return "", err
+	}
 
+	pubKey := append(private.PublicKey.X.Bytes(), private.PublicKey.Y.Bytes()...)
+	return string(pubKey), nil
+}
+
+//UserCreateWallet creates user wallet with elliptic curve public Key
+//Two optionals types: doctor and patient
 func UserCreateWallet(w http.ResponseWriter, r *http.Request) {
 	log := Log(r).WithField("handler", "user_create_wallet")
 
@@ -64,7 +77,7 @@ func UserCreateWallet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//generate unique public key
-	kp, err := keypair.Random()
+	walletAddress, err := newWalletAddress()
 	if err != nil {
 		log.WithError(err).Error("failed to generate random keypair")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -72,7 +85,7 @@ func UserCreateWallet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	wallet := &db.Wallet{
-		PublicKey: kp.Address(),
+		PublicKey: walletAddress,
 		Name:      userWalletRequest.Name,
 		Kind:      userWalletRequest.Kind,
 		OwnerID:   owner,
@@ -80,11 +93,18 @@ func UserCreateWallet(w http.ResponseWriter, r *http.Request) {
 
 	//TODO: missed GRPC connection to Hyperledger Fabric
 	//TODO: send Wallet request to separate go-routine to speedup time to respond
+	*PaymentUploader(r) <- payment.Uploader{
+		Operation: payment.CreateWallet,
+		Wallet:    wallet,
+	}
+
 	if err := DB(r).CreateWallet(wallet); err != nil {
 		log.WithError(err).Error("failed to create wallet")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	//Take fabric channel from config
+	//Create wallet with default amount of money
 	w.WriteHeader(http.StatusCreated)
 }

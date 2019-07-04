@@ -12,16 +12,14 @@ package x509
 
 import (
 	"encoding/hex"
+	"net/http"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/core"
 
-	"net/http"
-
-	factory "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/sdkpatch/cryptosuitebridge"
-	log "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/sdkpatch/logbridge"
-
 	"github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/api"
 	"github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/lib/client/credential"
+	factory "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/sdkpatch/cryptosuitebridge"
+	log "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/sdkpatch/logbridge"
 	"github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/util"
 	"github.com/pkg/errors"
 )
@@ -109,8 +107,8 @@ func (cred *Credential) Store() error {
 }
 
 // CreateToken creates token based on this X509 credential
-func (cred *Credential) CreateToken(req *http.Request, reqBody []byte, fabCACompatibilityMode bool) (string, error) {
-	return util.CreateToken(cred.getCSP(), cred.val.certBytes, cred.val.key, req.Method, req.URL.RequestURI(), reqBody, fabCACompatibilityMode)
+func (cred *Credential) CreateToken(req *http.Request, reqBody []byte) (string, error) {
+	return util.CreateToken(cred.getCSP(), cred.val.certBytes, cred.val.key, reqBody)
 }
 
 // RevokeSelf revokes this X509 credential

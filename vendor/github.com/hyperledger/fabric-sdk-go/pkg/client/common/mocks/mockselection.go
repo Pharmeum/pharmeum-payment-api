@@ -61,12 +61,6 @@ func (ds *MockSelectionService) GetEndorsersForChaincode(chaincodes []*fab.Chain
 		peers = ds.Peers
 	}
 
-	if params.PeerSorter != nil {
-		sortedPeers := make([]fab.Peer, len(peers))
-		copy(sortedPeers, peers)
-		peers = params.PeerSorter(sortedPeers)
-	}
-
 	return peers, nil
 
 }

@@ -37,7 +37,7 @@ const (
 func TestChannelConfigWithPeer(t *testing.T) {
 
 	ctx := setupTestContext()
-	peer := getPeerWithConfigBlockPayload(t, "http://peer1.com")
+	peer := getPeerWithConfigBlockPayload(t)
 
 	channelConfig, err := New(channelID, WithPeers([]fab.Peer{peer}), WithMinResponses(1), WithMaxTargets(1))
 	if err != nil {
@@ -79,8 +79,8 @@ func TestChannelConfigWithPeerWithRetries(t *testing.T) {
 	mockConfig := &customMockConfig{MockConfig: &mocks.MockConfig{}, chConfig: chConfig}
 	ctx.SetEndpointConfig(mockConfig)
 
-	peer1 := getPeerWithConfigBlockPayload(t, "http://peer1.com")
-	peer2 := getPeerWithConfigBlockPayload(t, "http://peer2.com")
+	peer1 := getPeerWithConfigBlockPayload(t)
+	peer2 := getPeerWithConfigBlockPayload(t)
 
 	channelConfig, err := New(channelID, WithPeers([]fab.Peer{peer1, peer2}))
 	if err != nil {
@@ -105,7 +105,7 @@ func TestChannelConfigWithPeerWithRetries(t *testing.T) {
 func TestChannelConfigWithPeerError(t *testing.T) {
 
 	ctx := setupTestContext()
-	peer := getPeerWithConfigBlockPayload(t, "http://peer1.com")
+	peer := getPeerWithConfigBlockPayload(t)
 
 	channelConfig, err := New(channelID, WithPeers([]fab.Peer{peer}), WithMinResponses(2))
 	if err != nil {
@@ -291,7 +291,8 @@ func testResolveOptsDefaultValues(t *testing.T, channelID string) {
 		t.Fatal("Failed to create channel config")
 	}
 
-	channelConfig.resolveOptsFromConfig(ctx)
+	err = channelConfig.resolveOptsFromConfig(ctx)
+	assert.Nil(t, err, "Failed to resolve opts from config, %v", err)
 	assert.True(t, channelConfig.opts.MaxTargets == 2, "supposed to be loaded once opts resolved from config")
 	assert.True(t, channelConfig.opts.MinResponses == 1, "supposed to be loaded once opts resolved from config")
 	assert.True(t, channelConfig.opts.RetryOpts.RetryableCodes != nil, "supposed to be loaded once opts resolved from config")
@@ -304,7 +305,7 @@ func setupTestContext() context.Client {
 	return ctx
 }
 
-func getPeerWithConfigBlockPayload(t *testing.T, peerURL string) fab.Peer {
+func getPeerWithConfigBlockPayload(t *testing.T) fab.Peer {
 
 	// create config block builder in order to create valid payload
 	builder := &mocks.MockConfigBlockBuilder{
@@ -327,7 +328,7 @@ func getPeerWithConfigBlockPayload(t *testing.T, peerURL string) fab.Peer {
 	}
 
 	// peer with valid config block payload
-	peer := &mocks.MockPeer{MockName: "Peer1", MockURL: peerURL, MockRoles: []string{}, MockCert: nil, Payload: payload, Status: 200}
+	peer := &mocks.MockPeer{MockName: "Peer1", MockURL: "http://peer1.com", MockRoles: []string{}, MockCert: nil, Payload: payload, Status: 200}
 
 	return peer
 }
@@ -348,9 +349,9 @@ type customMockConfig struct {
 	called   bool
 }
 
-func (c *customMockConfig) ChannelConfig(name string) *fab.ChannelEndpointConfig {
+func (c *customMockConfig) ChannelConfig(name string) (*fab.ChannelEndpointConfig, bool) {
 	c.called = true
-	return c.chConfig
+	return c.chConfig, true
 }
 
 //customRetryHandler is wrapper around retry handler which keeps count of attempts for unit-testing

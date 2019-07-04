@@ -5,14 +5,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/stellar/go/support/log"
-
 	"github.com/Pharmeum/pharmeum-payment-api/utils"
 )
 
 //UserWallets returns list of user wallets
 func UserWallets(w http.ResponseWriter, r *http.Request) {
-	log := log.WithField("handler", "user_wallets")
+	log := Log(r).WithField("handler", "user_wallets")
 
 	userID := utils.UserID(r.Context())
 	if userID == 0 {

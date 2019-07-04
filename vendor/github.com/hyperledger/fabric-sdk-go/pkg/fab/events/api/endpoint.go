@@ -16,6 +16,9 @@ import (
 type EventEndpoint interface {
 	fab.Peer
 
+	// EventURL returns the event URL
+	EventURL() string
+
 	// Opts returns additional options for the connection
 	Opts() []options.Opt
 }

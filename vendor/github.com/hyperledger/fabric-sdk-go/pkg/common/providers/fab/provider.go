@@ -10,12 +10,13 @@ import (
 	reqContext "context"
 	"crypto/tls"
 	"crypto/x509"
-	"time"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/options"
+
+	"time"
+
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/core"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/msp"
-	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk/metrics"
 	"google.golang.org/grpc"
 )
 
@@ -68,21 +69,6 @@ type TargetFilter interface {
 	Accept(peer Peer) bool
 }
 
-// TargetSorter allows for sorting target peers
-type TargetSorter interface {
-	// Returns the sorted peers
-	Sort(peers []Peer) []Peer
-}
-
-// PrioritySelector determines how likely a peer is to be
-// selected over another peer
-type PrioritySelector interface {
-	// A positive return value means peer1 is selected
-	// A negative return value means the peer2 is selected
-	// Zero return value means their priorities are the same
-	Compare(peer1, peer2 Peer) int
-}
-
 // CommManager enables network communication.
 type CommManager interface {
 	DialContext(ctx reqContext.Context, target string, opts ...grpc.DialOption) (*grpc.ClientConn, error)
@@ -98,10 +84,11 @@ type EndpointConfig interface {
 	PeerConfig(nameOrURL string) (*PeerConfig, bool)
 	NetworkConfig() *NetworkConfig
 	NetworkPeers() []NetworkPeer
-	ChannelConfig(name string) *ChannelEndpointConfig
-	ChannelPeers(name string) []ChannelPeer
-	ChannelOrderers(name string) []OrdererConfig
+	ChannelConfig(name string) (*ChannelEndpointConfig, bool)
+	ChannelPeers(name string) ([]ChannelPeer, bool)
+	ChannelOrderers(name string) ([]OrdererConfig, bool)
 	TLSCACertPool() CertPool
+	EventServiceType() EventServiceType
 	TLSClientCerts() []tls.Certificate
 	CryptoConfigPath() string
 }
@@ -110,8 +97,10 @@ type EndpointConfig interface {
 type TimeoutType int
 
 const (
-	// PeerConnection connection timeout
-	PeerConnection TimeoutType = iota
+	// EndorserConnection connection timeout
+	EndorserConnection TimeoutType = iota
+	// EventHubConnection connection timeout
+	EventHubConnection
 	// EventReg connection timeout
 	EventReg
 	// Query timeout
@@ -148,26 +137,29 @@ const (
 	SelectionServiceRefresh
 )
 
+// EventServiceType specifies the type of event service to use
+type EventServiceType int
+
+const (
+	// AutoDetectEventServiceType uses channel capabilities to determine which event service to use
+	AutoDetectEventServiceType EventServiceType = iota
+	// DeliverEventServiceType uses the Deliver Service for block and filtered-block events
+	DeliverEventServiceType
+	// EventHubEventServiceType uses the Event Hub for block events
+	EventHubEventServiceType
+)
+
 // Providers represents the SDK configured service providers context.
 type Providers interface {
 	LocalDiscoveryProvider() LocalDiscoveryProvider
 	ChannelProvider() ChannelProvider
 	InfraProvider() InfraProvider
 	EndpointConfig() EndpointConfig
-	MetricsProvider
 }
 
 // CertPool is a thread safe wrapper around the x509 standard library
 // cert pool implementation.
 type CertPool interface {
 	// Get returns the cert pool, optionally adding the provided certs
-	Get() (*x509.CertPool, error)
-	//Add allows adding certificates to CertPool
-	//Call Get() after Add() to get the updated certpool
-	Add(certs ...*x509.Certificate)
-}
-
-// MetricsProvider represents a provider of metrics.
-type MetricsProvider interface {
-	GetMetrics() *metrics.ClientMetrics
+	Get(certs ...*x509.Certificate) (*x509.CertPool, error)
 }

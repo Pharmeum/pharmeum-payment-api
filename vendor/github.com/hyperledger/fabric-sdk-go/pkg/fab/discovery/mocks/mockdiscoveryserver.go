@@ -81,23 +81,23 @@ func (s *MockDiscoveryServer) Discover(ctx context.Context, request *discovery.S
 func (s *MockDiscoveryServer) processQuery(q *discovery.Query) *discovery.QueryResult {
 	if q.Channel == "" {
 		if query := q.GetLocalPeers(); query != nil {
-			return s.getLocalPeerQueryResult()
+			return s.getLocalPeerQueryResult(query)
 		}
 	} else {
 		if query := q.GetPeerQuery(); query != nil {
-			return s.getPeerQueryResult()
+			return s.getPeerQueryResult(query)
 		}
 		if query := q.GetConfigQuery(); query != nil {
-			return s.getConfigQueryResult()
+			return s.getConfigQueryResult(query)
 		}
 		if query := q.GetCcQuery(); query != nil {
-			return s.getCCQueryResult()
+			return s.getCCQueryResult(query)
 		}
 	}
 	return nil
 }
 
-func (s *MockDiscoveryServer) getLocalPeerQueryResult() *discovery.QueryResult {
+func (s *MockDiscoveryServer) getLocalPeerQueryResult(q *discovery.LocalPeerQuery) *discovery.QueryResult {
 	if s.localPeersByOrg != nil {
 		return &discovery.QueryResult{
 			Result: &discovery.QueryResult_Members{
@@ -116,7 +116,7 @@ func (s *MockDiscoveryServer) getLocalPeerQueryResult() *discovery.QueryResult {
 	}
 }
 
-func (s *MockDiscoveryServer) getPeerQueryResult() *discovery.QueryResult {
+func (s *MockDiscoveryServer) getPeerQueryResult(q *discovery.PeerMembershipQuery) *discovery.QueryResult {
 	if s.peersByOrg != nil {
 		return &discovery.QueryResult{
 			Result: &discovery.QueryResult_Members{
@@ -135,7 +135,7 @@ func (s *MockDiscoveryServer) getPeerQueryResult() *discovery.QueryResult {
 	}
 }
 
-func (s *MockDiscoveryServer) getConfigQueryResult() *discovery.QueryResult {
+func (s *MockDiscoveryServer) getConfigQueryResult(q *discovery.ConfigQuery) *discovery.QueryResult {
 	return &discovery.QueryResult{
 		Result: &discovery.QueryResult_Error{
 			Error: &discovery.Error{
@@ -145,7 +145,7 @@ func (s *MockDiscoveryServer) getConfigQueryResult() *discovery.QueryResult {
 	}
 }
 
-func (s *MockDiscoveryServer) getCCQueryResult() *discovery.QueryResult {
+func (s *MockDiscoveryServer) getCCQueryResult(q *discovery.ChaincodeQuery) *discovery.QueryResult {
 	return &discovery.QueryResult{
 		Result: &discovery.QueryResult_Error{
 			Error: &discovery.Error{

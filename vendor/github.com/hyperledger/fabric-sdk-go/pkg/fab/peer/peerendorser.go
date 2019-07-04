@@ -86,7 +86,7 @@ func newPeerEndorser(endorseReq *peerEndorserRequest) (*peerEndorser, error) {
 	grpcOpts = append(grpcOpts, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxCallRecvMsgSize),
 		grpc.MaxCallSendMsgSize(maxCallSendMsgSize)))
 
-	timeout := endorseReq.config.Timeout(fab.PeerConnection)
+	timeout := endorseReq.config.Timeout(fab.EndorserConnection)
 
 	pc := &peerEndorser{
 		grpcDialOption: grpcOpts,
@@ -108,15 +108,10 @@ func (p *peerEndorser) ProcessTransactionProposal(ctx reqContext.Context, reques
 		return &tpr, errors.Wrapf(err, "Transaction processing for endorser [%s]", p.target)
 	}
 
-	chaincodeStatus, err := getChaincodeResponseStatus(proposalResponse)
-	if err != nil {
-		return nil, errors.WithMessage(err, "chaincode response status parsing failed")
-	}
-
 	tpr := fab.TransactionProposalResponse{
 		ProposalResponse: proposalResponse,
 		Endorser:         p.target,
-		ChaincodeStatus:  chaincodeStatus,
+		ChaincodeStatus:  getChaincodeResponseStatus(proposalResponse),
 		Status:           proposalResponse.GetResponse().Status,
 	}
 	return &tpr, nil
@@ -157,7 +152,6 @@ func (p *peerEndorser) sendProposal(ctx reqContext.Context, proposal fab.Process
 	endorserClient := pb.NewEndorserClient(conn)
 	resp, err := endorserClient.ProcessProposal(ctx, proposal.SignedProposal)
 
-	//TODO separate check for stable & devstable error messages should be refactored
 	if err != nil {
 		logger.Errorf("process proposal failed [%s]", err)
 		rpcStatus, ok := grpcstatus.FromError(err)
@@ -171,11 +165,6 @@ func (p *peerEndorser) sendProposal(ctx reqContext.Context, proposal fab.Process
 				if extractErr != nil {
 					//if not premature execution error, then look for chaincode already launching error
 					code, message1, extractErr = extractChaincodeAlreadyLaunchingError(rpcStatus)
-				}
-
-				if extractErr != nil {
-					//if not chaincode already launching error, then look for chaincode name not found error
-					code, message1, extractErr = extractChaincodeNameNotFoundError(rpcStatus)
 				}
 
 				if extractErr != nil {
@@ -226,17 +215,8 @@ func extractChaincodeError(status *grpcstatus.Status) (int, string, error) {
 
 //extractChaincodeErrorFromResponse extracts chaincode error from proposal response
 func extractChaincodeErrorFromResponse(resp *pb.ProposalResponse) error {
-	if resp.Response.Status < int32(common.Status_SUCCESS) || resp.Response.Status >= int32(common.Status_BAD_REQUEST) {
+	if resp.Response.Status != int32(common.Status_SUCCESS) {
 		details := []interface{}{resp.Endorsement, resp.Response.Payload}
-		if strings.Contains(resp.Response.Message, "premature execution") {
-			return status.New(status.EndorserClientStatus, int32(status.PrematureChaincodeExecution), resp.Response.Message, details)
-		} else if strings.Contains(resp.Response.Message, "chaincode is already launching") {
-			return status.New(status.EndorserClientStatus, int32(status.ChaincodeAlreadyLaunching), resp.Response.Message, details)
-		} else if strings.Contains(resp.Response.Message, "could not find chaincode with name") {
-			return status.New(status.EndorserClientStatus, int32(status.ChaincodeNameNotFound), resp.Response.Message, details)
-		} else if strings.Contains(resp.Response.Message, "cannot get package for chaincode") {
-			return status.New(status.EndorserClientStatus, int32(status.ChaincodeNameNotFound), resp.Response.Message, details)
-		}
 		return status.New(status.ChaincodeStatus, resp.Response.Status, resp.Response.Message, details)
 	}
 	return nil
@@ -277,36 +257,14 @@ func extractChaincodeAlreadyLaunchingError(grpcstat *grpcstatus.Status) (int32, 
 	return int32(status.ChaincodeAlreadyLaunching), grpcstat.Message()[index:], nil
 }
 
-func extractChaincodeNameNotFoundError(grpcstat *grpcstatus.Status) (int32, string, error) {
-	if grpcstat.Code().String() != statusCodeUnknown || grpcstat.Message() == "" {
-		return 0, "", errors.New("not a 'could not find chaincode with name' error")
-	}
-	index := strings.Index(grpcstat.Message(), "could not find chaincode with name")
-	if index == -1 {
-		index = strings.Index(grpcstat.Message(), "cannot get package for chaincode")
-		if index == -1 {
-			return 0, "", errors.New("not a 'could not find chaincode with name' error")
-		}
-	}
-	return int32(status.ChaincodeNameNotFound), grpcstat.Message()[index:], nil
-}
-
 // getChaincodeResponseStatus gets the actual response status from response.Payload.extension.Response.status, as fabric always returns actual 200
-func getChaincodeResponseStatus(response *pb.ProposalResponse) (int32, error) {
+func getChaincodeResponseStatus(response *pb.ProposalResponse) int32 {
 	if response.Payload != nil {
-		payload, err := protos_utils.GetProposalResponsePayload(response.Payload)
-		if err != nil {
-			return 0, errors.Wrap(err, "unmarshal of proposal response payload failed")
-		}
-
-		extension, err := protos_utils.GetChaincodeAction(payload.Extension)
-		if err != nil {
-			return 0, errors.Wrap(err, "unmarshal of chaincode action failed")
-		}
-
+		payload, _ := protos_utils.GetProposalResponsePayload(response.Payload)
+		extension, _ := protos_utils.GetChaincodeAction(payload.Extension)
 		if extension != nil && extension.Response != nil {
-			return extension.Response.Status, nil
+			return extension.Response.Status
 		}
 	}
-	return response.Response.Status, nil
+	return response.Response.Status
 }

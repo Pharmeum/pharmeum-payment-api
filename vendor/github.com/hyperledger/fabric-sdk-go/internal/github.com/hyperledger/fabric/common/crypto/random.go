@@ -20,11 +20,7 @@ Please review third_party pinning scripts and patches for more details.
 
 package crypto
 
-import (
-	"crypto/rand"
-
-	"github.com/pkg/errors"
-)
+import "crypto/rand"
 
 const (
 	// NonceSize is the default NonceSize
@@ -38,7 +34,7 @@ func GetRandomBytes(len int) ([]byte, error) {
 	// TODO: rand could fill less bytes then len
 	_, err := rand.Read(key)
 	if err != nil {
-		return nil, errors.Wrap(err, "error getting random bytes")
+		return nil, err
 	}
 
 	return key, nil

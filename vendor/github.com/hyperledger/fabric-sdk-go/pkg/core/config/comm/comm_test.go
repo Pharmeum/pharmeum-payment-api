@@ -9,7 +9,6 @@ package comm
 import (
 	"bytes"
 	"encoding/hex"
-	"strconv"
 	"testing"
 
 	"strings"
@@ -18,11 +17,8 @@ import (
 
 	"reflect"
 
-	"crypto/x509"
-
 	"github.com/golang/mock/gomock"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/test/mockfab"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestTLSConfigErrorAddingCertificate(t *testing.T) {
@@ -62,11 +58,7 @@ func TestTLSConfigHappyPath(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	testCertPool := x509.NewCertPool()
-	certs := createNCerts(1)
-	testCertPool.AddCert(certs[0])
-
-	config := mockfab.CustomMockConfig(mockCtrl, testCertPool)
+	config := mockfab.DefaultMockConfig(mockCtrl)
 
 	serverHostOverride := "servernamebeingoverriden"
 
@@ -79,7 +71,7 @@ func TestTLSConfigHappyPath(t *testing.T) {
 		t.Fatal("Incorrect server name!")
 	}
 
-	if tlsConfig.RootCAs != testCertPool {
+	if tlsConfig.RootCAs != mockfab.CertPool {
 		t.Fatal("Incorrect cert pool")
 	}
 
@@ -92,18 +84,6 @@ func TestTLSConfigHappyPath(t *testing.T) {
 	}
 }
 
-func createNCerts(n int) []*x509.Certificate {
-	var certs []*x509.Certificate
-	for i := 0; i < n; i++ {
-		cert := &x509.Certificate{
-			RawSubject: []byte(strconv.Itoa(i)),
-			Raw:        []byte(strconv.Itoa(i)),
-		}
-		certs = append(certs, cert)
-	}
-	return certs
-}
-
 func TestNoTlsCertHash(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -111,9 +91,11 @@ func TestNoTlsCertHash(t *testing.T) {
 
 	config.EXPECT().TLSClientCerts().Return([]tls.Certificate{})
 
-	tlsCertHash, err := TLSCertHash(config)
-	assert.NotNil(t, tlsCertHash)
-	assert.Nil(t, err)
+	tlsCertHash := TLSCertHash(config)
+
+	if len(tlsCertHash) != 0 {
+		t.Fatal("Unexpected non-empty cert hash")
+	}
 }
 
 func TestEmptyTlsCertHash(t *testing.T) {
@@ -124,9 +106,11 @@ func TestEmptyTlsCertHash(t *testing.T) {
 	emptyCert := tls.Certificate{}
 	config.EXPECT().TLSClientCerts().Return([]tls.Certificate{emptyCert})
 
-	tlsCertHash, err := TLSCertHash(config)
-	assert.NotNil(t, tlsCertHash)
-	assert.Nil(t, err)
+	tlsCertHash := TLSCertHash(config)
+
+	if len(tlsCertHash) != 0 {
+		t.Fatal("Unexpected non-empty cert hash")
+	}
 }
 
 func TestTlsCertHash(t *testing.T) {
@@ -140,9 +124,8 @@ func TestTlsCertHash(t *testing.T) {
 	}
 
 	config.EXPECT().TLSClientCerts().Return([]tls.Certificate{cert})
-	tlsCertHash, err := TLSCertHash(config)
-	assert.NotNil(t, tlsCertHash)
-	assert.Nil(t, err)
+	tlsCertHash := TLSCertHash(config)
+
 	// openssl x509 -fingerprint -sha256 -in testdata/server.crt
 	// SHA256 Fingerprint=0D:D5:90:B8:A5:0E:A6:04:3E:A8:75:16:BF:77:A8:FE:E7:C5:62:2D:4C:B3:CB:99:12:74:72:2A:D8:BA:B8:92
 	expectedHash, err := hex.DecodeString("0DD590B8A50EA6043EA87516BF77A8FEE7C5622D4CB3CB991274722AD8BAB892")

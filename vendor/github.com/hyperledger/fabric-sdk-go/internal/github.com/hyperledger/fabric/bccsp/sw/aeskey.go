@@ -20,8 +20,9 @@ Please review third_party pinning scripts and patches for more details.
 package sw
 
 import (
-	"crypto/sha256"
 	"errors"
+
+	"crypto/sha256"
 
 	"github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric/bccsp"
 )

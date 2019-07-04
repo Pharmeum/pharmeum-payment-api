@@ -8,13 +8,16 @@ package modlog
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+
 	"sync"
+
+	"io"
+
 	"sync/atomic"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/logging/api"
@@ -432,8 +435,11 @@ func (l *Log) getCallerInfo(opts *loggerOpts) string {
 		return ""
 	}
 
-	const MAXCALLERS = 6  // search MAXCALLERS frames for the real caller
-	const SKIPCALLERS = 4 // skip SKIPCALLERS frames when determining the real caller
+	const MAXCALLERS = 6                    // search MAXCALLERS frames for the real caller
+	const SKIPCALLERS = 4                   // skip SKIPCALLERS frames when determining the real caller
+	const DEFAULTLOGPREFIX = "api.(Logger)" // LOGPREFIX indicates the upcoming frame contains the real caller and skip the frame
+	const LOGPREFIX = "logging.(*Logger)"   // LOGPREFIX indicates the upcoming frame contains the real caller and skip the frame
+	const LOGBRIDGEPREFIX = "logbridge."    // LOGBRIDGEPREFIX indicates to skip the frame due to being a logbridge
 	const NOTFOUND = "n/a"
 
 	fpcs := make([]uintptr, MAXCALLERS)
@@ -446,41 +452,17 @@ func (l *Log) getCallerInfo(opts *loggerOpts) string {
 	frames := runtime.CallersFrames(fpcs[:n])
 	funcIsNext := false
 	for f, more := frames.Next(); more; f, more = frames.Next() {
-		pkgPath, fnName := filepath.Split(f.Function)
-
+		_, funName := filepath.Split(f.Function)
 		if f.Func == nil || f.Function == "" {
-			fnName = NOTFOUND // not a function or unknown
+			funName = NOTFOUND // not a function or unknown
 		}
 
-		if hasLoggerFnPrefix(pkgPath, fnName) {
+		if strings.HasPrefix(funName, LOGPREFIX) || strings.HasPrefix(funName, LOGBRIDGEPREFIX) || strings.HasPrefix(funName, DEFAULTLOGPREFIX) {
 			funcIsNext = true
-
 		} else if funcIsNext {
-			return fmt.Sprintf(callerInfoFormatter, fnName)
+			return fmt.Sprintf(callerInfoFormatter, funName)
 		}
 	}
 
 	return fmt.Sprintf(callerInfoFormatter, NOTFOUND)
-}
-
-func hasLoggerFnPrefix(pkgPath string, fnName string) bool {
-	const (
-		loggingAPIPath = "github.com/hyperledger/fabric-sdk-go/pkg/core/logging/"
-		loggingAPIPkg  = "api"
-		loggingPath    = "github.com/hyperledger/fabric-sdk-go/pkg/common/"
-		loggingPkg     = "logging"
-		logBridgePath  = "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/sdkpatch/logbridge"
-		logBridgePkg   = "logbridge"
-	)
-
-	switch pkgPath {
-	case loggingAPIPath:
-		return strings.HasPrefix(fnName, loggingAPIPkg)
-	case loggingPath:
-		return strings.HasPrefix(fnName, loggingPkg)
-	case logBridgePath:
-		return strings.HasPrefix(fnName, logBridgePkg)
-	}
-
-	return false
 }

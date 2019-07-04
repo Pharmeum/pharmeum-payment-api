@@ -13,19 +13,12 @@ import (
 	discclient "github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric/discovery/client"
 	"github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric/protos/discovery"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/errors/multi"
-	"github.com/hyperledger/fabric-sdk-go/pkg/common/logging"
 	fabcontext "github.com/hyperledger/fabric-sdk-go/pkg/common/providers/context"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 	corecomm "github.com/hyperledger/fabric-sdk-go/pkg/core/config/comm"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fab/comm"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
-)
-
-var logger = logging.NewLogger("fabsdk/fab")
-
-const (
-	signerCacheSize = 10 // TODO: set an appropriate value (and perhaps make configurable)
 )
 
 // Client implements a Discovery client
@@ -70,21 +63,19 @@ func (c *Client) Send(ctx context.Context, req *discclient.Request, targets ...f
 	var responses []Response
 	var errs error
 
-	for _, t := range targets {
-		go func(target fab.PeerConfig) {
+	for _, target := range targets {
+		pconfig := target
+		go func() {
 			defer wg.Done()
-
-			resp, err := c.send(ctx, req, target)
+			resp, err := c.send(ctx, req, pconfig)
 			lock.Lock()
 			if err != nil {
-				errs = multi.Append(errs, errors.WithMessage(err, "From target: "+target.URL))
-				logger.Debugf("... got discovery error response from [%s]: %s", target.URL, err)
+				errs = multi.Append(errs, errors.WithMessage(err, "From target: "+pconfig.URL))
 			} else {
-				responses = append(responses, &response{Response: resp, target: target.URL})
-				logger.Debugf("... got discovery response from [%s]", target.URL)
+				responses = append(responses, &response{Response: resp, target: pconfig.URL})
 			}
 			lock.Unlock()
-		}(t)
+		}()
 	}
 	wg.Wait()
 
@@ -108,7 +99,6 @@ func (c *Client) send(reqCtx context.Context, req *discclient.Request, target fa
 		func(msg []byte) ([]byte, error) {
 			return c.ctx.SigningManager().Sign(msg, c.ctx.PrivateKey())
 		},
-		signerCacheSize,
 	)
 	return discClient.Send(reqCtx, req, c.authInfo)
 }
@@ -129,13 +119,8 @@ func newAuthInfo(ctx fabcontext.Client) (*discovery.AuthInfo, error) {
 		return nil, err
 	}
 
-	hash, err := corecomm.TLSCertHash(ctx.EndpointConfig())
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get tls cert hash")
-	}
-
 	return &discovery.AuthInfo{
 		ClientIdentity:    identity,
-		ClientTlsCertHash: hash,
+		ClientTlsCertHash: corecomm.TLSCertHash(ctx.EndpointConfig()),
 	}, nil
 }

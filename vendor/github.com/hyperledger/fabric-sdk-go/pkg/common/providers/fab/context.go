@@ -33,6 +33,3 @@ type Transactor interface {
 type ChannelProvider interface {
 	ChannelService(ctx ClientContext, channelID string) (ChannelService, error)
 }
-
-// ErrorHandler is invoked when an error occurs in one of the services
-type ErrorHandler func(ctxt ClientContext, channelID string, err error)

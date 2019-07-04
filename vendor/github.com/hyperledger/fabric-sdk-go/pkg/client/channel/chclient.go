@@ -22,13 +22,11 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel/invoke"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/common/discovery/greylist"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/common/filter"
-	selectopts "github.com/hyperledger/fabric-sdk-go/pkg/client/common/selection/options"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/errors/retry"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/errors/status"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/context"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 	contextImpl "github.com/hyperledger/fabric-sdk-go/pkg/context"
-	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk/metrics"
 	"github.com/pkg/errors"
 )
 
@@ -42,7 +40,6 @@ type Client struct {
 	membership   fab.ChannelMembership
 	eventService fab.EventService
 	greylist     *greylist.Filter
-	metrics      *metrics.ClientMetrics
 }
 
 // ClientOption describes a functional parameter for the New constructor
@@ -72,7 +69,12 @@ func New(channelProvider context.ChannelProvider, opts ...ClientOption) (*Client
 		return nil, errors.WithMessage(err, "membership creation failed")
 	}
 
-	channelClient := newClient(channelContext, membership, eventService, greylistProvider)
+	channelClient := Client{
+		membership:   membership,
+		eventService: eventService,
+		greylist:     greylistProvider,
+		context:      channelContext,
+	}
 
 	for _, param := range opts {
 		err := param(&channelClient)
@@ -96,7 +98,7 @@ func (cc *Client) Query(request Request, options ...RequestOption) (Response, er
 	options = append(options, addDefaultTimeout(fab.Query))
 	options = append(options, addDefaultTargetFilter(cc.context, filter.ChaincodeQuery))
 
-	return callQuery(cc, request, options...)
+	return cc.InvokeHandler(invoke.NewQueryHandler(), request, options...)
 }
 
 // Execute prepares and executes transaction using request and optional request options
@@ -110,7 +112,7 @@ func (cc *Client) Execute(request Request, options ...RequestOption) (Response, 
 	options = append(options, addDefaultTimeout(fab.Execute))
 	options = append(options, addDefaultTargetFilter(cc.context, filter.EndorsingPeer))
 
-	return callExecute(cc, request, options...)
+	return cc.InvokeHandler(invoke.NewExecuteHandler(), request, options...)
 }
 
 // addDefaultTargetFilter adds default target filter if target filter is not specified
@@ -161,10 +163,6 @@ func (cc *Client) InvokeHandler(handler invoke.Handler, request Request, options
 		requestContext.RetryHandler,
 		retry.WithBeforeRetry(
 			func(err error) {
-				if requestContext.Opts.BeforeRetry != nil {
-					requestContext.Opts.BeforeRetry(err)
-				}
-
 				cc.greylist.Greylist(err)
 
 				// Reset context parameters
@@ -177,7 +175,7 @@ func (cc *Client) InvokeHandler(handler invoke.Handler, request Request, options
 
 	complete := make(chan bool, 1)
 	go func() {
-		_, _ = invoker.Invoke( // nolint: gas
+		_, _ = invoker.Invoke(
 			func() (interface{}, error) {
 				handler.Handle(requestContext, clientContext)
 				return nil, requestContext.Error
@@ -245,13 +243,6 @@ func (cc *Client) prepareHandlerContexts(reqCtx reqContext.Context, request Requ
 		return true
 	}
 
-	var peerSorter selectopts.PeerSorter
-	if o.TargetSorter != nil {
-		peerSorter = func(peers []fab.Peer) []fab.Peer {
-			return o.TargetSorter.Sort(peers)
-		}
-	}
-
 	clientContext := &invoke.ClientContext{
 		Selection:    selection,
 		Discovery:    discovery,
@@ -267,7 +258,6 @@ func (cc *Client) prepareHandlerContexts(reqCtx reqContext.Context, request Requ
 		RetryHandler:    retry.New(o.Retry),
 		Ctx:             reqCtx,
 		SelectionFilter: peerFilter,
-		PeerSorter:      peerSorter,
 	}
 
 	return requestContext, clientContext, nil

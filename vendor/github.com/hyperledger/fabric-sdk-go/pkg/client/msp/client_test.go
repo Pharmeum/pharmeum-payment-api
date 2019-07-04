@@ -8,13 +8,14 @@ package msp
 
 import (
 	"errors"
-	"fmt"
 	"math/rand"
 	"net"
-	"os"
 	"strconv"
 	"strings"
 	"testing"
+
+	"fmt"
+	"os"
 
 	contextApi "github.com/hyperledger/fabric-sdk-go/pkg/common/providers/context"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/core"
@@ -27,8 +28,6 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
 	mspImpl "github.com/hyperledger/fabric-sdk-go/pkg/msp"
 	"github.com/hyperledger/fabric-sdk-go/pkg/msp/test/mockmsp"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -90,123 +89,6 @@ func TestMSP(t *testing.T) {
 	// Try with a non-default org
 	testWithOrg2(t, ctxProvider)
 
-}
-
-func TestMSPWithProfile(t *testing.T) {
-	f := testFixture{}
-	sdk := f.setup()
-	defer sdk.Close()
-
-	ctxProvider := sdk.Context()
-	msp, err := New(ctxProvider)
-	require.NoError(t, err)
-
-	enrollUsername := randomUsername()
-	_, err = msp.GetSigningIdentity(enrollUsername)
-	if err != ErrUserNotFound {
-		t.Fatal("Expected to not find user")
-	}
-
-	err = msp.Enroll(enrollUsername, WithSecret("enrollmentSecret"), WithProfile("tls"))
-	require.NoError(t, err)
-
-	enrolledUser, err := msp.GetSigningIdentity(enrollUsername)
-	require.NoError(t, err)
-
-	assert.Equal(t, enrollUsername, enrolledUser.Identifier().ID)
-	assert.Equal(t, "Org1MSP", enrolledUser.Identifier().MSPID)
-
-	err = msp.Reenroll(enrolledUser.Identifier().ID, WithProfile("tls"))
-	if err != nil {
-		t.Fatalf("Reenroll return error %s", err)
-	}
-}
-
-func TestMSPWithType(t *testing.T) {
-	f := testFixture{}
-	sdk := f.setup()
-	defer sdk.Close()
-
-	ctxProvider := sdk.Context()
-	msp, err := New(ctxProvider)
-	require.NoError(t, err)
-
-	enrollUsername := randomUsername()
-	_, err = msp.GetSigningIdentity(enrollUsername)
-	if err != ErrUserNotFound {
-		t.Fatal("Expected to not find user")
-	}
-
-	err = msp.Enroll(enrollUsername, WithSecret("enrollmentSecret"), WithType("idemix"))
-	if err == nil {
-		t.Fatal("idemix enroll not supported")
-	}
-
-	err = msp.Reenroll(enrollUsername, WithType("idemix"))
-	if err == nil {
-		t.Fatal("idemix enroll not supported")
-	}
-}
-
-func TestMSPWithLabel(t *testing.T) {
-	f := testFixture{}
-	sdk := f.setup()
-	defer sdk.Close()
-
-	ctxProvider := sdk.Context()
-	msp, err := New(ctxProvider)
-	require.NoError(t, err)
-
-	enrollUsername := randomUsername()
-	_, err = msp.GetSigningIdentity(enrollUsername)
-	if err != ErrUserNotFound {
-		t.Fatal("Expected to not find user")
-	}
-
-	err = msp.Enroll(enrollUsername, WithSecret("enrollmentSecret"), WithLabel("ForFabric"))
-	require.NoError(t, err)
-
-	enrolledUser, err := msp.GetSigningIdentity(enrollUsername)
-	require.NoError(t, err)
-
-	assert.Equal(t, enrollUsername, enrolledUser.Identifier().ID)
-	assert.Equal(t, "Org1MSP", enrolledUser.Identifier().MSPID)
-
-	err = msp.Reenroll(enrolledUser.Identifier().ID, WithLabel("ForFabric"))
-	if err != nil {
-		t.Fatalf("Reenroll return error %s", err)
-	}
-}
-
-func TestMSPWithAttributeRequests(t *testing.T) {
-	f := testFixture{}
-	sdk := f.setup()
-	defer sdk.Close()
-
-	ctxProvider := sdk.Context()
-	msp, err := New(ctxProvider)
-	require.NoError(t, err)
-
-	enrollUsername := randomUsername()
-	_, err = msp.GetSigningIdentity(enrollUsername)
-	if err != ErrUserNotFound {
-		t.Fatal("Expected to not find user")
-	}
-
-	attrReqs := []*AttributeRequest{{Name: "name1", Optional: true}}
-	err = msp.Enroll(enrollUsername, WithSecret("enrollmentSecret"), WithAttributeRequests(attrReqs))
-	require.NoError(t, err)
-
-	enrolledUser, err := msp.GetSigningIdentity(enrollUsername)
-	require.NoError(t, err)
-
-	assert.Equal(t, enrollUsername, enrolledUser.Identifier().ID)
-	assert.Equal(t, "Org1MSP", enrolledUser.Identifier().MSPID)
-
-	err = msp.Reenroll(enrolledUser.Identifier().ID, WithAttributeRequests(attrReqs))
-	if err != nil {
-		t.Fatalf("Reenroll return error %s", err)
-	}
 }
 
 func TestWithNonExistentOrganization(t *testing.T) {
@@ -523,10 +405,6 @@ func cleanup(storePath string) {
 	err := os.RemoveAll(storePath)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to remove dir %s: %s\n", storePath, err))
-	}
-	// Recreate the directory only
-	if err := os.MkdirAll(storePath, os.FileMode(os.ModePerm)); err != nil {
-		panic(fmt.Sprintf("Failed to recreate dir %s: %s\n", storePath, err))
 	}
 }
 

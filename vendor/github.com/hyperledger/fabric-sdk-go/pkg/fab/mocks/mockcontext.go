@@ -16,7 +16,6 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/msp"
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/mocks"
-	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk/metrics"
 	mspmocks "github.com/hyperledger/fabric-sdk-go/pkg/msp/test/mockmsp"
 
 	"strings"
@@ -186,11 +185,6 @@ func (pc *MockProviderContext) ChannelProvider() fab.ChannelProvider {
 	return pc.channelProvider
 }
 
-//SetCustomChannelProvider sets custom channel provider for unit-test purposes
-func (pc *MockProviderContext) SetCustomChannelProvider(customChannelProvider fab.ChannelProvider) {
-	pc.channelProvider = customChannelProvider
-}
-
 //InfraProvider returns fabric provider
 func (pc *MockProviderContext) InfraProvider() fab.InfraProvider {
 	return pc.infraProvider
@@ -204,11 +198,6 @@ func (pc *MockProviderContext) EndpointConfig() fab.EndpointConfig {
 //SetCustomInfraProvider sets custom fabric provider for unit-test purposes
 func (pc *MockProviderContext) SetCustomInfraProvider(customInfraProvider fab.InfraProvider) {
 	pc.infraProvider = customInfraProvider
-}
-
-// GetMetrics not used in this mockcontext
-func (pc *MockProviderContext) GetMetrics() *metrics.ClientMetrics {
-	return &metrics.ClientMetrics{}
 }
 
 // MockContext holds core providers and identity to enable mocking.
@@ -302,11 +291,6 @@ func (c *MockChannelContext) ChannelService() fab.ChannelService {
 // ChannelID returns the channel ID
 func (c *MockChannelContext) ChannelID() string {
 	return c.channelID
-}
-
-// GetMetrics not used in this mockcontext
-func (c *MockChannelContext) GetMetrics() *metrics.ClientMetrics {
-	return &metrics.ClientMetrics{}
 }
 
 // MockTransactionHeader supplies a transaction ID and metadata.

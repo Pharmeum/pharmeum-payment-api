@@ -1,5 +1,3 @@
-// +build testing
-
 /*
 Copyright SecureKey Technologies Inc. All Rights Reserved.
 

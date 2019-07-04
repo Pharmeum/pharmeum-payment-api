@@ -60,8 +60,10 @@ func New(request fab.TransactionRequest) (*fab.Transaction, error) {
 	}
 
 	responsePayload := request.ProposalResponses[0].ProposalResponse.Payload
-	if vprErr := validateProposalResponses(request.ProposalResponses); vprErr != nil {
-		return nil, vprErr
+	for _, r := range request.ProposalResponses {
+		if r.ProposalResponse.Response.Status != 200 {
+			return nil, errors.Errorf("proposal response was not successful, error code %d, msg %s", r.ProposalResponse.Response.Status, r.ProposalResponse.Response.Message)
+		}
 	}
 
 	// fill endorsements
@@ -95,15 +97,6 @@ func New(request fab.TransactionRequest) (*fab.Transaction, error) {
 		Transaction: &pb.Transaction{Actions: taas},
 		Proposal:    proposal,
 	}, nil
-}
-
-func validateProposalResponses(responses []*fab.TransactionProposalResponse) error {
-	for _, r := range responses {
-		if r.ProposalResponse.Response.Status < int32(common.Status_SUCCESS) || r.ProposalResponse.Response.Status >= int32(common.Status_BAD_REQUEST) {
-			return errors.Errorf("proposal response was not successful, error code %d, msg %s", r.ProposalResponse.Response.Status, r.ProposalResponse.Response.Message)
-		}
-	}
-	return nil
 }
 
 // Send send a transaction to the chain’s orderer service (one or more orderer endpoints) for consensus and committing to the ledger.

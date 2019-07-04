@@ -123,8 +123,7 @@ func TestTLSCAConfigFromPems(t *testing.T) {
 	assert.Nil(t, err, "TLS CA cert parse failed, reason: %s", err)
 	assert.True(t, ok, "TLS CA cert parse failed")
 
-	endpointConfig.TLSCACertPool().Add(cert)
-	_, err = endpointConfig.TLSCACertPool().Get()
+	_, err = endpointConfig.TLSCACertPool().Get(cert)
 	assert.Nil(t, err, "TLS CA cert pool fetch failed, reason: %s", err)
 	//Test TLSCA Cert Pool (Negative test case)
 
@@ -136,8 +135,7 @@ func TestTLSCAConfigFromPems(t *testing.T) {
 	assert.Nil(t, err, "TLS CA cert parse was supposed to fail")
 	assert.False(t, ok, "TLS CA cert parse was supposed to fail")
 
-	endpointConfig.TLSCACertPool().Add(badCert)
-	_, err = endpointConfig.TLSCACertPool().Get()
+	_, err = endpointConfig.TLSCACertPool().Get(badCert)
 	assert.Nil(t, err, "TLSCACertPool failed %s", err)
 
 	keyPem, ok := identityConfig.CAClientKey(org1)
@@ -338,12 +336,15 @@ func TestCAConfig(t *testing.T) {
 	identityConfig := config.(*IdentityConfig)
 	//Test Crypto config path
 
+	val, ok := backend[0].Lookup("client.cryptoconfig.path")
+	if !ok || val == nil {
+		t.Fatal("expected valid value")
+	}
+
 	//Testing CAConfig
 	caConfig, ok := identityConfig.CAConfig(org1)
 	assert.True(t, ok, "Get CA Config failed")
 	assert.NotNil(t, caConfig, "Get CA Config failed")
-	assert.Equal(t, 1, len(caConfig.GRPCOptions))
-	assert.Equal(t, "ca.org1.example.com", caConfig.GRPCOptions["ssl-target-name-override"])
 
 	// Test CA KeyStore Path
 	testCAKeyStorePath(backend[0], t, identityConfig)
@@ -453,12 +454,7 @@ func TestIdentityConfigWithMultipleBackends(t *testing.T) {
 	caConfig, ok := identityConfig.CAConfig("org1")
 	assert.True(t, ok, "identityConfig.CAConfig(org1) should have been successful for multiple backends")
 	assert.Equal(t, caConfig.URL, "https://ca.org1.example.com:7054")
-	assert.Equal(t, 1, len(caConfig.GRPCOptions))
-	assert.Equal(t, "ca.org1.example.com", caConfig.GRPCOptions["ssl-target-name-override"])
 
-	caConfig, ok = identityConfig.CAConfig("org2")
-	assert.True(t, ok, "identityConfig.CAConfig(org2) should have been successful for multiple backends")
-	assert.Equal(t, caConfig.URL, "https://ca.org2.example.com:8054")
 }
 
 func newViper(path string) *viper.Viper {
@@ -488,20 +484,4 @@ func tlsCertByBytes(bytes []byte) (*x509.Certificate, error) {
 
 	//no cert found and there is no error
 	return nil, errors.New("empty byte")
-}
-
-func TestEntityMatchers(t *testing.T) {
-
-	backend, err := config.FromFile(configTestEntityMatchersFilePath)()
-	if err != nil {
-		t.Fatal("Failed to get config backend")
-	}
-
-	identityConfig, err := ConfigFromBackend(backend...)
-	assert.Nil(t, err, "Failed to get endpoint config from backend")
-	assert.NotNil(t, identityConfig, "expected valid endpointconfig")
-
-	configImpl := identityConfig.(*IdentityConfig)
-	assert.Equal(t, 3, len(configImpl.caMatchers), "preloading matchers isn't working as expected")
-
 }

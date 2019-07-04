@@ -21,10 +21,9 @@ package signer
 
 import (
 	"crypto"
+	"io"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/core"
-
-	"io"
 
 	"github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric/bccsp/utils"
 	"github.com/pkg/errors"
@@ -89,6 +88,6 @@ func (s *bccspCryptoSigner) Public() crypto.PublicKey {
 // Note that when a signature of a hash of a larger message is needed,
 // the caller is responsible for hashing the larger message and passing
 // the hash (as digest) and the hash function (as opts) to Sign.
-func (s *bccspCryptoSigner) Sign(rand io.Reader, digest []byte, opts crypto.SignerOpts) ([]byte, error) {
+func (s *bccspCryptoSigner) Sign(rand io.Reader, digest []byte, opts crypto.SignerOpts) (signature []byte, err error) {
 	return s.csp.Sign(s.key, digest, opts)
 }

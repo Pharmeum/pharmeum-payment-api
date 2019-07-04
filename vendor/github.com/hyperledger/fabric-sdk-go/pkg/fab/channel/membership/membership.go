@@ -10,8 +10,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 
-	"strings"
-
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric/msp"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/common/verifier"
@@ -26,7 +24,6 @@ var logger = logging.NewLogger("fabsdk/fab")
 
 type identityImpl struct {
 	mspManager msp.MSPManager
-	msps       []string
 }
 
 // Context holds the providers
@@ -37,11 +34,11 @@ type Context struct {
 
 // New member identity
 func New(ctx Context, cfg fab.ChannelCfg) (fab.ChannelMembership, error) {
-	mspManager, mspNames, err := createMSPManager(ctx, cfg)
+	m, err := createMSPManager(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
-	return &identityImpl{mspManager: mspManager, msps: mspNames}, nil
+	return &identityImpl{mspManager: m}, nil
 }
 
 func (i *identityImpl) Validate(serializedID []byte) error {
@@ -53,7 +50,6 @@ func (i *identityImpl) Validate(serializedID []byte) error {
 
 	id, err := i.mspManager.DeserializeIdentity(serializedID)
 	if err != nil {
-		logger.Errorf("failed to deserialize identity: %s", err)
 		return err
 	}
 	return id.Validate()
@@ -66,15 +62,6 @@ func (i *identityImpl) Verify(serializedID []byte, msg []byte, sig []byte) error
 	}
 
 	return id.Verify(msg, sig)
-}
-
-func (i *identityImpl) ContainsMSP(msp string) bool {
-	for _, v := range i.msps {
-		if v == strings.ToLower(msp) {
-			return true
-		}
-	}
-	return false
 }
 
 func areCertDatesValid(serializedID []byte) error {
@@ -101,42 +88,28 @@ func areCertDatesValid(serializedID []byte) error {
 	return nil
 }
 
-func createMSPManager(ctx Context, cfg fab.ChannelCfg) (msp.MSPManager, []string, error) {
+func createMSPManager(ctx Context, cfg fab.ChannelCfg) (msp.MSPManager, error) {
 	mspManager := msp.NewMSPManager()
-	var mspNames []string
 	if len(cfg.MSPs()) > 0 {
 		msps, err := loadMSPs(cfg.MSPs(), ctx.CryptoSuite())
 		if err != nil {
-			return nil, nil, errors.WithMessage(err, "load MSPs from config failed")
+			return nil, errors.WithMessage(err, "load MSPs from config failed")
 		}
 
 		if err := mspManager.Setup(msps); err != nil {
-			return nil, nil, errors.WithMessage(err, "MSPManager Setup failed")
+			return nil, errors.WithMessage(err, "MSPManager Setup failed")
 		}
-
-		certsByMsp := make(map[string][][]byte)
+		var certs [][]byte
 		for _, msp := range msps {
-			mspName, err := msp.GetIdentifier()
-			if err != nil {
-				return nil, nil, errors.WithMessage(err, "MSPManager certpool setup failed")
-			}
-			certsByMsp[mspName] = append(msp.GetTLSRootCerts(), msp.GetTLSIntermediateCerts()...)
+			certs = append(certs, msp.GetTLSRootCerts()...)
+			certs = append(certs, msp.GetTLSIntermediateCerts()...)
 		}
-
-		for mspName, certs := range certsByMsp {
+		if len(certs) > 0 {
 			addCertsToConfig(ctx.EndpointConfig, certs)
-			mspNames = append(mspNames, strings.ToLower(mspName))
 		}
 	}
 
-	//To make sure tls cert pool is updated in advance with all the new certs being added,
-	// to avoid delay in first endorsement connection with new peer
-	_, err := ctx.EndpointConfig.TLSCACertPool().Get()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return mspManager, mspNames, nil
+	return mspManager, nil
 }
 
 func loadMSPs(mspConfigs []*mb.MSPConfig, cs core.CryptoSuite) ([]msp.MSP, error) {
@@ -211,11 +184,6 @@ func getFabricConfig(config *mb.MSPConfig) (*mb.FabricMSPConfig, error) {
 
 //addCertsToConfig adds cert bytes to config TLSCACertPool
 func addCertsToConfig(config fab.EndpointConfig, pemCertsList [][]byte) {
-
-	if len(pemCertsList) == 0 {
-		return
-	}
-
 	var certs []*x509.Certificate
 	for _, pemCerts := range pemCertsList {
 		for len(pemCerts) > 0 {
@@ -235,12 +203,13 @@ func addCertsToConfig(config fab.EndpointConfig, pemCertsList [][]byte) {
 			err = verifier.ValidateCertificateDates(cert)
 			if err != nil {
 				logger.Warn("%v", err)
-				continue
 			}
 
 			certs = append(certs, cert)
 		}
 	}
-
-	config.TLSCACertPool().Add(certs...)
+	_, err := config.TLSCACertPool().Get(certs...)
+	if err != nil {
+		logger.Warnf("TLSCACertPool failed %s", err)
+	}
 }

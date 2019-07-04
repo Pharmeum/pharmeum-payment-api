@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package gossip
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
@@ -17,9 +16,6 @@ import (
 // SignedGossipMessage out of it.
 // Returns an error if un-marshaling fails.
 func (e *Envelope) ToGossipMessage() (*SignedGossipMessage, error) {
-	if e == nil {
-		return nil, errors.New("nil envelope")
-	}
 	msg := &GossipMessage{}
 	err := proto.Unmarshal(e.Payload, msg)
 	if err != nil {

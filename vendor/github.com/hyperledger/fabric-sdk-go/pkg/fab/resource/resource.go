@@ -240,15 +240,9 @@ func createOrUpdateChannel(reqCtx reqContext.Context, txh *txn.TransactionHeader
 	if !ok {
 		return errors.New("failed get client context from reqContext for Creating ChannelHeader")
 	}
-
-	hash, err := ccomm.TLSCertHash(ctx.EndpointConfig())
-	if err != nil {
-		return errors.WithMessage(err, "failed to get tls cert hash")
-	}
-
 	channelHeaderOpts := txn.ChannelHeaderOpts{
 		TxnHeader:   txh,
-		TLSCertHash: hash,
+		TLSCertHash: ccomm.TLSCertHash(ctx.EndpointConfig()),
 	}
 	channelHeader, err := txn.CreateChannelHeader(common.HeaderType_CONFIG_UPDATE, channelHeaderOpts)
 	if err != nil {
@@ -367,7 +361,7 @@ func InstallChaincode(reqCtx reqContext.Context, req InstallChaincodeRequest, ta
 		return nil, fab.EmptyTransactionID, err
 	}
 
-	return resp.([]*fab.TransactionProposalResponse), prop.TxnID, nil
+	return resp.([]*fab.TransactionProposalResponse), prop.TxnID, err
 }
 
 func queryChaincodeWithTarget(reqCtx reqContext.Context, request fab.ChaincodeInvokeRequest, target fab.ProposalProcessor, opts options) ([]byte, error) {

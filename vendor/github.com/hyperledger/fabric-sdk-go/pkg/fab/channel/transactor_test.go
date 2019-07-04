@@ -8,9 +8,8 @@ package channel
 
 import (
 	"testing"
-	"time"
 
-	"github.com/stretchr/testify/assert"
+	"time"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/core"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
@@ -22,23 +21,12 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/fab/mocks"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fab/txn"
 	mspmocks "github.com/hyperledger/fabric-sdk-go/pkg/msp/test/mockmsp"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateTxnID(t *testing.T) {
 	transactor := createTransactor(t)
-
-	txh := createTxnID(t, transactor)
-	assert.NotEmpty(t, txh.Nonce())
-	assert.NotEmpty(t, txh.Creator())
-	assert.NotEmpty(t, txh.TransactionID())
-
-	creator := []byte("creator")
-	nonce := []byte("12345")
-
-	txh = createTxnID(t, transactor, fab.WithCreator(creator), fab.WithNonce(nonce))
-	assert.Equal(t, nonce, txh.Nonce())
-	assert.Equal(t, creator, txh.Creator())
-	assert.NotEmpty(t, txh.TransactionID())
+	createTxnID(t, transactor)
 }
 
 func TestTransactionProposal(t *testing.T) {
@@ -90,8 +78,8 @@ func createTransactor(t *testing.T) *Transactor {
 	return transactor
 }
 
-func createTxnID(t *testing.T, transactor *Transactor, opts ...fab.TxnHeaderOpt) fab.TransactionHeader {
-	txh, err := transactor.CreateTransactionHeader(opts...)
+func createTxnID(t *testing.T, transactor *Transactor) fab.TransactionHeader {
+	txh, err := transactor.CreateTransactionHeader()
 	assert.Nil(t, err, "creation of transaction ID failed")
 
 	return txh

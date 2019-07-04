@@ -7,9 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package msp
 
 import (
-	"fmt"
 	"strings"
 	"testing"
+
+	"fmt"
 
 	"github.com/golang/mock/gomock"
 	"github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/util"
@@ -20,7 +21,6 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/cryptosuite"
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/cryptosuite/bccsp/sw"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fab"
-	"github.com/hyperledger/fabric-sdk-go/pkg/msp/api"
 	apimocks "github.com/hyperledger/fabric-sdk-go/pkg/msp/test/mockmspapi"
 )
 
@@ -122,7 +122,7 @@ func checkSigningIdentityWithEnrollment(cryptoConfig core.CryptoSuiteConfig, t *
 	defer ctrl.Finish()
 	caClient := apimocks.NewMockCAClient(ctrl)
 	prepareForEnroll(t, caClient, cs)
-	err = caClient.Enroll(&api.EnrollmentRequest{Name: userToEnroll, Secret: "enrollmentSecret"})
+	err = caClient.Enroll(userToEnroll, "enrollmentSecret")
 	if err != nil {
 		t.Fatalf("fabricCAClient Enroll failed: %s", err)
 	}
@@ -138,7 +138,7 @@ func prepareForEnroll(t *testing.T, mc *apimocks.MockCAClient, cs core.CryptoSui
 
 	var err error
 
-	mc.EXPECT().Enroll(gomock.Any()).Do(func(enrollmentRequest *api.EnrollmentRequest) {
+	mc.EXPECT().Enroll(gomock.Any(), gomock.Any()).Do(func(enrollmentID string, enrollmentSecret string) {
 
 		// Simulate key and cert management normally done by the SDK
 
@@ -149,8 +149,8 @@ func prepareForEnroll(t *testing.T, mc *apimocks.MockCAClient, cs core.CryptoSui
 		// Save the "new" cert to user store
 		// This is done by IdentityManagement.Enroll()
 		user := &msp.UserData{
-			MSPID:                 userToEnrollMSPID,
-			ID:                    userToEnroll,
+			MSPID: userToEnrollMSPID,
+			ID:    userToEnroll,
 			EnrollmentCertificate: []byte(generatedCertBytes),
 		}
 		err = enrollmentTestUserStore.Store(user)

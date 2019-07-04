@@ -18,8 +18,3 @@ type Peer interface {
 
 	// TODO: Roles, Name, EnrollmentCertificate (if needed)
 }
-
-// PeerState provides state information about the Peer
-type PeerState interface {
-	BlockHeight() uint64
-}

@@ -7,13 +7,15 @@ SPDX-License-Identifier: Apache-2.0
 package channel
 
 import (
-	reqContext "context"
 	"strings"
 
 	"github.com/pkg/errors"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/context"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
+
+	reqContext "context"
+
 	contextImpl "github.com/hyperledger/fabric-sdk-go/pkg/context"
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/config/endpoint"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fab/txn"
@@ -64,7 +66,10 @@ func orderersFromChannelCfg(ctx context.Client, cfg fab.ChannelCfg) ([]fab.Order
 		return orderers, nil
 	}
 
-	ordererDict := orderersByTarget(ctx)
+	ordererDict, err := orderersByTarget(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	// Add orderer if specified in channel config
 	for _, target := range cfg.Orderers() {
@@ -108,7 +113,11 @@ func orderersFromChannelCfg(ctx context.Client, cfg fab.ChannelCfg) ([]fab.Order
 //will return empty list when orderers are not found in endpoint config
 func orderersFromChannel(ctx context.Client, channelID string) ([]fab.Orderer, error) {
 
-	chNetworkConfig := ctx.EndpointConfig().ChannelConfig(channelID)
+	chNetworkConfig, ok := ctx.EndpointConfig().ChannelConfig(channelID)
+	if !ok {
+		return []fab.Orderer{}, nil
+	}
+
 	orderers := []fab.Orderer{}
 	for _, chOrderer := range chNetworkConfig.Orderers {
 
@@ -128,7 +137,7 @@ func orderersFromChannel(ctx context.Client, channelID string) ([]fab.Orderer, e
 	return orderers, nil
 }
 
-func orderersByTarget(ctx context.Client) map[string]fab.OrdererConfig {
+func orderersByTarget(ctx context.Client) (map[string]fab.OrdererConfig, error) {
 	ordererDict := map[string]fab.OrdererConfig{}
 	orderersConfig := ctx.EndpointConfig().OrderersConfig()
 
@@ -136,18 +145,18 @@ func orderersByTarget(ctx context.Client) map[string]fab.OrdererConfig {
 		address := endpoint.ToAddress(oc.URL)
 		ordererDict[address] = oc
 	}
-	return ordererDict
+	return ordererDict, nil
 }
 
 // CreateTransactionHeader creates a Transaction Header based on the current context.
-func (t *Transactor) CreateTransactionHeader(opts ...fab.TxnHeaderOpt) (fab.TransactionHeader, error) {
+func (t *Transactor) CreateTransactionHeader() (fab.TransactionHeader, error) {
 
 	ctx, ok := contextImpl.RequestClientContext(t.reqCtx)
 	if !ok {
 		return nil, errors.New("failed get client context from reqContext for txn Header")
 	}
 
-	txh, err := txn.NewHeader(ctx, t.ChannelID, opts...)
+	txh, err := txn.NewHeader(ctx, t.ChannelID)
 	if err != nil {
 		return nil, errors.WithMessage(err, "new transaction ID failed")
 	}

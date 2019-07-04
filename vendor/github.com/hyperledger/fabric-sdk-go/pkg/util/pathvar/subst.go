@@ -36,14 +36,12 @@ func Subst(path string) string {
 	splits := strings.Split(path, sepPrefix)
 
 	var buffer bytes.Buffer
-
-	// first split precedes the first sepPrefix so should always be written
-	buffer.WriteString(splits[0]) // nolint: gas
+	buffer.WriteString(splits[0]) // first split precedes the first sepPrefix so should always be written
 
 	for _, s := range splits[1:] {
 		subst, rest := substVar(s, sepPrefix, sepSuffix)
-		buffer.WriteString(subst) // nolint: gas
-		buffer.WriteString(rest)  // nolint: gas
+		buffer.WriteString(subst)
+		buffer.WriteString(rest)
 	}
 
 	return buffer.String()

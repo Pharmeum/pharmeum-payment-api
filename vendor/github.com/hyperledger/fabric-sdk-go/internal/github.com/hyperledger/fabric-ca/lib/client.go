@@ -24,6 +24,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	cfsslapi "github.com/cloudflare/cfssl/api"
 	"github.com/cloudflare/cfssl/csr"
 	"github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/api"
@@ -36,7 +38,6 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/internal/github.com/hyperledger/fabric-ca/util"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/core"
 	"github.com/mitchellh/mapstructure"
-	"github.com/pkg/errors"
 )
 
 // Client is the fabric-ca client object
@@ -125,7 +126,7 @@ func (c *Client) Init() error {
 
 		c.csp = cfg.CSP
 		// Create http.Client object and associate it with this client
-		err = c.initHTTPClient(cfg.ServerName)
+		err = c.initHTTPClient()
 		if err != nil {
 			return err
 		}
@@ -136,7 +137,7 @@ func (c *Client) Init() error {
 	return nil
 }
 
-func (c *Client) initHTTPClient(serverName string) error {
+func (c *Client) initHTTPClient() error {
 	tr := new(http.Transport)
 	if c.Config.TLS.Enabled {
 		log.Info("TLS Enabled")
@@ -147,40 +148,10 @@ func (c *Client) initHTTPClient(serverName string) error {
 		}
 		// set the default ciphers
 		tlsConfig.CipherSuites = tls.DefaultCipherSuites
-		//set the host name override
-		tlsConfig.ServerName = serverName
-
 		tr.TLSClientConfig = tlsConfig
 	}
 	c.httpClient = &http.Client{Transport: tr}
 	return nil
-}
-
-// GetCAInfo returns generic CA information
-func (c *Client) GetCAInfo(req *api.GetCAInfoRequest) (*GetCAInfoResponse, error) {
-	err := c.Init()
-	if err != nil {
-		return nil, err
-	}
-	body, err := util.Marshal(req, "GetCAInfo")
-	if err != nil {
-		return nil, err
-	}
-	cainforeq, err := c.newPost("cainfo", body)
-	if err != nil {
-		return nil, err
-	}
-	netSI := &common.CAInfoResponseNet{}
-	err = c.SendReq(cainforeq, netSI)
-	if err != nil {
-		return nil, err
-	}
-	localSI := &GetCAInfoResponse{}
-	err = c.net2LocalCAInfo(netSI, localSI)
-	if err != nil {
-		return nil, err
-	}
-	return localSI, nil
 }
 
 // GenCSR generates a CSR (Certificate Signing Request)
@@ -195,7 +166,7 @@ func (c *Client) GenCSR(req *api.CSRInfo, id string) ([]byte, core.Key, error) {
 	cr := c.newCertificateRequest(req)
 	cr.CN = id
 
-	if (cr.KeyRequest == nil) || (cr.KeyRequest.Size() == 0 && cr.KeyRequest.Algo() == "") {
+	if cr.KeyRequest == nil {
 		cr.KeyRequest = newCfsslBasicKeyRequest(api.NewBasicKeyRequest())
 	}
 
@@ -303,7 +274,6 @@ func (c *Client) handleX509Enroll(req *api.EnrollmentRequest) (*EnrollmentRespon
 // 3. Sends a request with the CredentialRequest object in the body to the
 //    /api/v1/idemix/credentail REST endpoint to get a credential
 func (c *Client) handleIdemixEnroll(req *api.EnrollmentRequest) (*EnrollmentResponse, error) {
-	log.Infof("Successfully received Idemix credential from CA %s", req.CAName)
 	return nil, errors.New("idemix enroll not supported")
 }
 
@@ -610,14 +580,4 @@ func NormalizeURL(addr string) (*url.URL, error) {
 		}
 	}
 	return u, nil
-}
-
-// GetFabCAVersion is a utility function to fetch the Fabric CA version for this client
-// TODO remove the function below once Fabric CA v1.3 is not supported by the SDK anymore
-func (c *Client) GetFabCAVersion() (string, error) {
-	i, e := c.GetCAInfo(&api.GetCAInfoRequest{CAName: c.Config.CAName})
-	if e != nil {
-		return "", e
-	}
-	return i.Version, nil
 }

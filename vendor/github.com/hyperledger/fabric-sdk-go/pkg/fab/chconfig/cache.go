@@ -7,9 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package chconfig
 
 import (
-	"github.com/hyperledger/fabric-sdk-go/pkg/common/options"
+	"time"
+
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 	"github.com/hyperledger/fabric-sdk-go/pkg/util/concurrent/lazycache"
+
 	"github.com/pkg/errors"
 )
 
@@ -44,13 +46,13 @@ func NewCacheKey(ctx fab.ClientContext, pvdr Provider, channelID string) (CacheK
 
 // NewRefCache a cache of channel config references that refreshed with the
 // given interval
-func NewRefCache(opts ...options.Opt) *lazycache.Cache {
+func NewRefCache(refresh time.Duration) *lazycache.Cache {
 	initializer := func(key lazycache.Key) (interface{}, error) {
 		ck, ok := key.(CacheKey)
 		if !ok {
 			return nil, errors.New("unexpected cache key")
 		}
-		return NewRef(ck.Context(), ck.Provider(), ck.ChannelID(), opts...), nil
+		return NewRef(refresh, ck.Provider(), ck.ChannelID(), ck.Context()), nil
 	}
 
 	return lazycache.New("Channel_Cfg_Cache", initializer)

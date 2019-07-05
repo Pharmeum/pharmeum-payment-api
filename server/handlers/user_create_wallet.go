@@ -3,8 +3,10 @@ package handlers
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"crypto/md5"
 	"crypto/rand"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/Pharmeum/pharmeum-payment-api/payment"
@@ -48,8 +50,15 @@ func newWalletAddress() (string, error) {
 		return "", err
 	}
 
-	pubKey := append(private.PublicKey.X.Bytes(), private.PublicKey.Y.Bytes()...)
-	return string(pubKey), nil
+	r, s, err := ecdsa.Sign(rand.Reader, private, md5.New().Sum(nil))
+	if err != nil {
+		return "", err
+	}
+
+	signature := r.Bytes()
+	signature = append(signature, s.Bytes()...)
+
+	return fmt.Sprintf("%x", signature), nil
 }
 
 //UserCreateWallet creates user wallet with elliptic curve public Key

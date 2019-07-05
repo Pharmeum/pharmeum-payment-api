@@ -127,18 +127,18 @@ func (a App) Payment() chan payment.Uploader {
 
 			bytes, err := json.Marshal(uploader.Wallet)
 			if err != nil {
-				fmt.Println("err", err)
 				log.WithError(err).Errorf("failed to serialize wallet %s", uploader.Wallet.PublicKey)
 				continue
 			}
 
 			chaincodeArgs := [][]byte{[]byte(uploader.Wallet.PublicKey), bytes}
 
-			_, err = channelClient.Execute(
+			response, err := channelClient.Execute(
 				channel.Request{ChaincodeID: paymentChaincodeID, Fcn: createWallet, Args: chaincodeArgs},
 				channel.WithRetry(retry.DefaultChannelOpts),
 			)
 			if err != nil {
+				log.Debug(response)
 				log.WithError(err).Error("failed to create wallet in Blockchain")
 				continue
 			}

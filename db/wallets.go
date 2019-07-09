@@ -6,7 +6,7 @@ const walletsTableName = "wallets"
 
 type Wallet struct {
 	PublicKey string `db:"public_key" json:"public_key"`
-	OwnerID   uint64 `db:"owner_id" json:"owner_id"`
+	OwnerID   uint64 `db:"owner_id" json:"-"`
 }
 
 func (w Wallet) TableName() string {

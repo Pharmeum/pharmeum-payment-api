@@ -5,30 +5,39 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/Pharmeum/pharmeum-payment-api/services/wallet"
+	"github.com/sirupsen/logrus"
+
 	"github.com/Pharmeum/pharmeum-payment-api/utils"
 )
 
+type UserWalletsHandler struct {
+	log    *logrus.Entry
+	lister wallet.Lister
+}
+
+func NewUserWalletsHandler(lister wallet.Lister, log *logrus.Entry) *UserWalletsHandler {
+	return &UserWalletsHandler{
+		log:    log,
+		lister: lister,
+	}
+}
+
 //UserWallets returns list of user wallets
-func UserWallets(w http.ResponseWriter, r *http.Request) {
-	log := Log(r).WithField("handler", "user_wallets")
+func (h UserWalletsHandler) UserWallets(w http.ResponseWriter, r *http.Request) {
+	log := h.log.WithField("handler", "user_wallets")
 
 	userID := utils.UserID(r.Context())
 	if userID == 0 {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-
-	wallets, err := DB(r).UserWallets(userID)
+	wallets, err := h.lister.List(userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
-	}
-
-	if len(wallets) == 0 {
-		w.WriteHeader(http.StatusNoContent)
-		return
 	}
 
 	response, err := json.Marshal(&wallets)

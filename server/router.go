@@ -53,8 +53,10 @@ func Router(
 			jwtauth.Verifier(jwtAuth),
 			jwtauth.Authenticator,
 		)
-
-		router.Get("/wallets", handlers.UserWallets)
+		{
+			handler := handlers.NewUserWalletsHandler(wallet.NewLister(client, db), log)
+			router.Get("/wallets", handler.UserWallets)
+		}
 		{
 			createWalletHandler := handlers.NewCreateWalletHandler(
 				wallet.NewCreator(client, db),

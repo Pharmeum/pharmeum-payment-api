@@ -4,7 +4,8 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/Pharmeum/pharmeum-payment-api/payment"
+	"github.com/Pharmeum/pharmeum-payment-api/services/wallet"
+	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
 
 	"github.com/go-chi/jwtauth"
 
@@ -23,7 +24,7 @@ func Router(
 	http *url.URL,
 	db *db.DB,
 	jwtAuth *jwtauth.JWTAuth,
-	paymentUploader *chan payment.Uploader,
+	client *channel.Client,
 ) chi.Router {
 	router := chi.NewRouter()
 
@@ -44,7 +45,6 @@ func Router(
 			handlers.CtxHTTP(http),
 			handlers.CtxDB(db),
 			handlers.CtxJWT(jwtAuth),
-			handlers.CtxPaymentUploader(paymentUploader),
 		),
 	)
 
@@ -55,7 +55,13 @@ func Router(
 		)
 
 		router.Get("/wallets", handlers.UserWallets)
-		router.Post("/create_wallet", handlers.UserCreateWallet)
+		{
+			createWalletHandler := handlers.NewCreateWalletHandler(
+				wallet.NewCreator(client, db),
+				log,
+			)
+			router.Post("/create_wallet", createWalletHandler.CreateWallet)
+		}
 	})
 
 	return router

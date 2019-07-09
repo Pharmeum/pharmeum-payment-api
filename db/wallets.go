@@ -6,8 +6,6 @@ const walletsTableName = "wallets"
 
 type Wallet struct {
 	PublicKey string `db:"public_key" json:"public_key"`
-	Name      string `db:"name" json:"name"`
-	Kind      string `db:"kind" json:"kind"`
 	OwnerID   uint64 `db:"owner_id" json:"owner_id"`
 }
 

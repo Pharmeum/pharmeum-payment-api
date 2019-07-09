@@ -224,7 +224,7 @@ organizations:
 #
 orderers:
   orderer.pharmeum.io:
-    url: 172.17.0.1:7050
+    url: orderer.pharmeum.io:7050
 
     # these are standard properties defined by the gRPC library
     # they will be passed in as-is to gRPC client constructor
@@ -234,7 +234,28 @@ orderers:
       # as incompatible settings can result in closing of connection.
       # When duration of the 'keep-alive-time' is set to 0 or less the keep alive client parameters are disabled
       keep-alive-time: 0s
-      keep-alive-timeout: 20s
+      keep-alive-timeout: 10s
+      keep-alive-permit: false
+      fail-fast: false
+      # allow-insecure will be taken into consideration if address has no protocol defined, if true then grpc or else grpcs
+      allow-insecure: false
+
+    tlsCACerts:
+      # Certificate location absolute path
+      path: ${GOPATH}/src/github.com/Pharmeum/pharmeum-blockchain/fabric-utils/crypto-config/ordererOrganizations/pharmeum.io/tlsca/tlsca.pharmeum.io-cert.pem
+
+  reserved_orderer.pharmeum.io:
+    url: reserved_orderer.pharmeum.io:7050
+
+    # these are standard properties defined by the gRPC library
+    # they will be passed in as-is to gRPC client constructor
+    grpcOptions:
+      ssl-target-name-override: reserved_orderer.pharmeum.io
+      # These parameters should be set in coordination with the keepalive policy on the server,
+      # as incompatible settings can result in closing of connection.
+      # When duration of the 'keep-alive-time' is set to 0 or less the keep alive client parameters are disabled
+      keep-alive-time: 0s
+      keep-alive-timeout: 10s
       keep-alive-permit: false
       fail-fast: false
       # allow-insecure will be taken into consideration if address has no protocol defined, if true then grpc or else grpcs
@@ -251,7 +272,8 @@ orderers:
 peers:
   peer0.pharmeum.io:
     # this URL is used to send endorsement and query requests
-    url: 172.17.0.1:7051
+#    url: 172.17.0.1:7051
+    url: peer0.pharmeum.io:7051
 
     grpcOptions:
       ssl-target-name-override: peer0.pharmeum.io
@@ -275,7 +297,7 @@ peers:
 #
 certificateAuthorities:
   ca.pharmeum.io:
-    url: https://172.17.0.1:7054
+    url: https://ca.pharmeum.io:7054
     tlsCACerts:
       # Comma-Separated list of paths
       path: ${GOPATH}/src/github.com/Pharmeum/pharmeum-blockchain/fabric-utils/crypto-config/peerOrganizations/pharmeum.io/tlsca/tlsca.pharmeum.io-cert.pem
@@ -286,7 +308,7 @@ certificateAuthorities:
         cert:
           path: ${GOPATH}/src/github.com/Pharmeum/pharmeum-blockchain/fabric-utils/crypto-config/peerOrganizations/pharmeum.io/users/Admin@pharmeum.io/tls/client.crt
 
-    # Fabric-CA supports dynamic user enrollment via REST APIs. A "root" user, a.k.a registrar, is
+    # Fabric-CA supports dynamicasd user enrollment via REST APIs. A "root" user, a.k.a registrar, is
     # needed to enroll and invoke new users.
     registrar:
       enrollId: admin

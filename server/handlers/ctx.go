@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/Pharmeum/pharmeum-payment-api/payment"
+	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
 
 	"github.com/Pharmeum/pharmeum-payment-api/db"
 	"github.com/go-chi/jwtauth"
@@ -17,7 +17,7 @@ type CtxKey int
 const (
 	logCtxKey = iota
 	httpCtxKey
-	paymentUploaderCtxKey
+	channelClientCtxKey
 	dbCtxKey
 	jwtCtxKey
 )
@@ -42,14 +42,14 @@ func HTTP(r *http.Request) *url.URL {
 	return r.Context().Value(httpCtxKey).(*url.URL)
 }
 
-func CtxPaymentUploader(paymentUploader *chan payment.Uploader) func(context.Context) context.Context {
+func CtxChannelClient(client *channel.Client) func(context.Context) context.Context {
 	return func(ctx context.Context) context.Context {
-		return context.WithValue(ctx, paymentUploaderCtxKey, paymentUploader)
+		return context.WithValue(ctx, channelClientCtxKey, client)
 	}
 }
 
-func PaymentUploader(r *http.Request) *chan payment.Uploader {
-	return r.Context().Value(paymentUploaderCtxKey).(*chan payment.Uploader)
+func ChannelClient(r *http.Request) *channel.Client {
+	return r.Context().Value(channelClientCtxKey).(*channel.Client)
 }
 
 func CtxDB(db *db.DB) func(context.Context) context.Context {

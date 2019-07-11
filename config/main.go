@@ -3,6 +3,8 @@ package config
 import (
 	"sync"
 
+	"github.com/go-kivik/kivik"
+
 	"github.com/Pharmeum/pharmeum-payment-api/db"
 
 	"github.com/go-chi/jwtauth"
@@ -17,6 +19,7 @@ type Config interface {
 	DB() *db.DB
 	JWT() *jwtauth.JWTAuth
 	Channel() *channel.Client
+	CouchClient() *kivik.Client
 }
 
 type ConfigImpl struct {
@@ -28,6 +31,7 @@ type ConfigImpl struct {
 	channelClient *channel.Client
 	db            *db.DB
 	jwt           *jwtauth.JWTAuth
+	couchDBClient *kivik.Client
 }
 
 func New() Config {

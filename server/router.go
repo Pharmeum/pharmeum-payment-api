@@ -4,6 +4,8 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/go-kivik/kivik"
+
 	"github.com/Pharmeum/pharmeum-payment-api/services/wallet"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
 
@@ -25,6 +27,7 @@ func Router(
 	db *db.DB,
 	jwtAuth *jwtauth.JWTAuth,
 	client *channel.Client,
+	couchClient *kivik.Client,
 ) chi.Router {
 	router := chi.NewRouter()
 
@@ -58,11 +61,19 @@ func Router(
 			router.Get("/wallets", handler.UserWallets)
 		}
 		{
-			createWalletHandler := handlers.NewCreateWalletHandler(
+			handler := handlers.NewCreateWalletHandler(
 				wallet.NewCreator(client, db),
 				log,
 			)
-			router.Post("/create_wallet", createWalletHandler.CreateWallet)
+			router.Post("/create_wallet", handler.CreateWallet)
+		}
+		{
+			handler := handlers.WalletBalanceHandler{
+				Log:      log,
+				Balancer: wallet.NewBalancer(couchClient),
+				DB:       db,
+			}
+			router.Get("/wallet_balance", handler.WalletBalance)
 		}
 	})
 

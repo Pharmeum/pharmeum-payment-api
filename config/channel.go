@@ -15,7 +15,7 @@ const (
 
 //Channel read configuration related to pharmeum-channel inside Hyperledger network
 type Channel struct {
-	ConfigFilePath string `env:"PHARMEUM_CHANNEL_CONFIG_FILE_PATH"`
+	ConfigFilePath string `env:"PHARMEUM_CHANNEL_CONFIG_FILE_PATH,required"`
 }
 
 func (c *ConfigImpl) Channel() *channel.Client {
@@ -37,16 +37,16 @@ func (c *ConfigImpl) Channel() *channel.Client {
 		panic(err)
 	}
 
-	//prepare channel client context using client context
+	//prepare channel couchDBClient context using couchDBClient context
 	clientChannelContext := sdk.ChannelContext(channelID, fabsdk.WithUser(orgAdmin), fabsdk.WithOrg(orgName))
-	// Channel client is used to query and execute transactions
+	// Channel couchDBClient is used to query and execute transactions
 	client, err := channel.New(clientChannelContext)
 	if err != nil {
 		panic(err)
 	}
 
 	if client == nil {
-		panic("client can't be nil")
+		panic("couchDBClient can't be nil")
 	}
 
 	c.channelClient = client

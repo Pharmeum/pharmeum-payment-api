@@ -41,6 +41,7 @@ func (a *App) Start() error {
 		conf.DB(),
 		conf.JWT(),
 		conf.Channel(),
+		conf.CouchClient(),
 	)
 
 	serverHost := fmt.Sprintf("%s:%s", httpConfiguration.Host, httpConfiguration.Port)

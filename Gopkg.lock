@@ -2,12 +2,6 @@
 
 
 [[projects]]
-  name = "github.com/Knetic/govaluate"
-  packages = ["."]
-  revision = "d216395917cc49052c7c7094cf57f09657ca08a8"
-  version = "v3.0.0"
-
-[[projects]]
   name = "github.com/beorn7/perks"
   packages = ["quantile"]
   revision = "4b2b341e8d7715fae06375aa633dbb6e91b3fb46"
@@ -36,6 +30,12 @@
   packages = ["."]
   revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
   version = "v3.2.0"
+
+[[projects]]
+  name = "github.com/flimzy/kivik"
+  packages = [".","driver","errors"]
+  revision = "282806bcce9636d14620cebbf25f44c7e7ca387a"
+  version = "v1.8.1"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -68,6 +68,18 @@
   version = "v0.9.0"
 
 [[projects]]
+  name = "github.com/go-kivik/couchdb"
+  packages = [".","chttp"]
+  revision = "81b6da1a43bbd387f6de5c49b0eb4c7cb305d154"
+  version = "v1.8.1"
+
+[[projects]]
+  name = "github.com/go-kivik/kivik"
+  packages = ["."]
+  revision = "a957cb2adc5964c7074254ec028aa5d29b8676a2"
+  version = "v1.6.0"
+
+[[projects]]
   name = "github.com/go-logfmt/logfmt"
   packages = ["."]
   revision = "07c9b44f60d7ffdfb7d8efe1ad539965737836dc"
@@ -86,12 +98,6 @@
   version = "v3.5.0"
 
 [[projects]]
-  name = "github.com/gogo/protobuf"
-  packages = ["proto"]
-  revision = "ba06b47c162d49f2af050fb4c75bcbc86a159d5c"
-  version = "v1.2.1"
-
-[[projects]]
   branch = "master"
   name = "github.com/golang/mock"
   packages = ["gomock"]
@@ -99,9 +105,9 @@
 
 [[projects]]
   name = "github.com/golang/protobuf"
-  packages = ["jsonpb","proto","ptypes","ptypes/any","ptypes/duration","ptypes/empty","ptypes/struct","ptypes/timestamp"]
-  revision = "b5d812f8a3706043e23a9cd5babf2e5423744d30"
-  version = "v1.3.1"
+  packages = ["proto","ptypes","ptypes/any","ptypes/duration","ptypes/timestamp"]
+  revision = "6c65a5562fc06764971b7c5d05c76c75e84bdbf7"
+  version = "v1.3.2"
 
 [[projects]]
   name = "github.com/google/certificate-transparency-go"
@@ -122,10 +128,16 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/hyperledger/fabric-sdk-go"
-  packages = ["internal/github.com/hyperledger/fabric-ca/api","internal/github.com/hyperledger/fabric-ca/lib","internal/github.com/hyperledger/fabric-ca/lib/attrmgr","internal/github.com/hyperledger/fabric-ca/lib/client/credential","internal/github.com/hyperledger/fabric-ca/lib/client/credential/x509","internal/github.com/hyperledger/fabric-ca/lib/common","internal/github.com/hyperledger/fabric-ca/lib/streamer","internal/github.com/hyperledger/fabric-ca/lib/tls","internal/github.com/hyperledger/fabric-ca/sdkpatch/cryptosuitebridge","internal/github.com/hyperledger/fabric-ca/sdkpatch/logbridge","internal/github.com/hyperledger/fabric-ca/util","internal/github.com/hyperledger/fabric/bccsp","internal/github.com/hyperledger/fabric/bccsp/factory/sw","internal/github.com/hyperledger/fabric/bccsp/signer","internal/github.com/hyperledger/fabric/bccsp/sw","internal/github.com/hyperledger/fabric/bccsp/utils","internal/github.com/hyperledger/fabric/common/capabilities","internal/github.com/hyperledger/fabric/common/cauthdsl","internal/github.com/hyperledger/fabric/common/channelconfig","internal/github.com/hyperledger/fabric/common/configtx","internal/github.com/hyperledger/fabric/common/crypto","internal/github.com/hyperledger/fabric/common/genesis","internal/github.com/hyperledger/fabric/common/metrics","internal/github.com/hyperledger/fabric/common/metrics/disabled","internal/github.com/hyperledger/fabric/common/metrics/internal/namer","internal/github.com/hyperledger/fabric/common/metrics/prometheus","internal/github.com/hyperledger/fabric/common/metrics/statsd","internal/github.com/hyperledger/fabric/common/metrics/statsd/goruntime","internal/github.com/hyperledger/fabric/common/policies","internal/github.com/hyperledger/fabric/common/tools/protolator","internal/github.com/hyperledger/fabric/common/tools/protolator/protoext","internal/github.com/hyperledger/fabric/common/tools/protolator/protoext/commonext","internal/github.com/hyperledger/fabric/common/tools/protolator/protoext/ledger/rwsetext","internal/github.com/hyperledger/fabric/common/tools/protolator/protoext/mspext","internal/github.com/hyperledger/fabric/common/tools/protolator/protoext/ordererext","internal/github.com/hyperledger/fabric/common/tools/protolator/protoext/peerext","internal/github.com/hyperledger/fabric/common/util","internal/github.com/hyperledger/fabric/core/comm","internal/github.com/hyperledger/fabric/core/common/ccprovider","internal/github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/rwsetutil","internal/github.com/hyperledger/fabric/core/ledger/util","internal/github.com/hyperledger/fabric/core/middleware","internal/github.com/hyperledger/fabric/core/operations","internal/github.com/hyperledger/fabric/discovery/client","internal/github.com/hyperledger/fabric/discovery/protoext","internal/github.com/hyperledger/fabric/gossip/protoext","internal/github.com/hyperledger/fabric/msp","internal/github.com/hyperledger/fabric/msp/cache","internal/github.com/hyperledger/fabric/protoutil","internal/github.com/hyperledger/fabric/sdkinternal/configtxgen/encoder","internal/github.com/hyperledger/fabric/sdkinternal/configtxgen/localconfig","internal/github.com/hyperledger/fabric/sdkinternal/configtxlator/update","internal/github.com/hyperledger/fabric/sdkinternal/pkg/identity","internal/github.com/hyperledger/fabric/sdkpatch/cryptosuitebridge","internal/github.com/hyperledger/fabric/sdkpatch/logbridge","internal/github.com/hyperledger/fabric/sdkpatch/logbridge/httpadmin","pkg/client/channel","pkg/client/channel/invoke","pkg/client/common/discovery","pkg/client/common/discovery/dynamicdiscovery","pkg/client/common/discovery/greylist","pkg/client/common/discovery/staticdiscovery","pkg/client/common/filter","pkg/client/common/random","pkg/client/common/selection/balancer","pkg/client/common/selection/dynamicselection","pkg/client/common/selection/dynamicselection/pgresolver","pkg/client/common/selection/fabricselection","pkg/client/common/selection/options","pkg/client/common/selection/sorter/balancedsorter","pkg/client/common/selection/sorter/blockheightsorter","pkg/client/common/verifier","pkg/common/errors/multi","pkg/common/errors/retry","pkg/common/errors/status","pkg/common/logging","pkg/common/options","pkg/common/providers/context","pkg/common/providers/core","pkg/common/providers/fab","pkg/common/providers/msp","pkg/common/providers/test/mockfab","pkg/context","pkg/core/config","pkg/core/config/comm","pkg/core/config/comm/tls","pkg/core/config/cryptoutil","pkg/core/config/endpoint","pkg/core/config/lookup","pkg/core/cryptosuite","pkg/core/cryptosuite/bccsp/sw","pkg/core/cryptosuite/bccsp/wrapper","pkg/core/logging/api","pkg/core/logging/metadata","pkg/core/logging/modlog","pkg/core/mocks","pkg/fab","pkg/fab/channel","pkg/fab/channel/membership","pkg/fab/chconfig","pkg/fab/comm","pkg/fab/discovery","pkg/fab/events/api","pkg/fab/events/client","pkg/fab/events/client/dispatcher","pkg/fab/events/client/lbp","pkg/fab/events/client/peerresolver","pkg/fab/events/client/peerresolver/balanced","pkg/fab/events/client/peerresolver/minblockheight","pkg/fab/events/client/peerresolver/preferorg","pkg/fab/events/deliverclient","pkg/fab/events/deliverclient/connection","pkg/fab/events/deliverclient/dispatcher","pkg/fab/events/deliverclient/seek","pkg/fab/events/endpoint","pkg/fab/events/service","pkg/fab/events/service/blockfilter","pkg/fab/events/service/dispatcher","pkg/fab/events/service/mocks","pkg/fab/keyvaluestore","pkg/fab/mocks","pkg/fab/orderer","pkg/fab/peer","pkg/fab/resource","pkg/fab/resource/genesisconfig","pkg/fab/signingmgr","pkg/fab/txn","pkg/fabsdk","pkg/fabsdk/api","pkg/fabsdk/factory/defcore","pkg/fabsdk/factory/defmsp","pkg/fabsdk/factory/defsvc","pkg/fabsdk/metrics","pkg/fabsdk/metrics/cfg","pkg/fabsdk/provider/chpvdr","pkg/fabsdk/provider/fabpvdr","pkg/fabsdk/provider/msppvdr","pkg/msp","pkg/msp/api","pkg/msp/test/mockmsp","pkg/util/concurrent/futurevalue","pkg/util/concurrent/lazycache","pkg/util/concurrent/lazyref","pkg/util/concurrent/rollingcounter","pkg/util/pathvar","pkg/util/test","test/metadata","third_party/github.com/hyperledger/fabric/protos/common","third_party/github.com/hyperledger/fabric/protos/discovery","third_party/github.com/hyperledger/fabric/protos/gossip","third_party/github.com/hyperledger/fabric/protos/ledger/rwset","third_party/github.com/hyperledger/fabric/protos/ledger/rwset/kvrwset","third_party/github.com/hyperledger/fabric/protos/msp","third_party/github.com/hyperledger/fabric/protos/orderer","third_party/github.com/hyperledger/fabric/protos/orderer/etcdraft","third_party/github.com/hyperledger/fabric/protos/peer","third_party/github.com/hyperledger/fabric/protos/token"]
-  revision = "e00befbefdb6deb06b59a697c42e0f3147c91b7e"
+  packages = ["internal/github.com/hyperledger/fabric-ca/api","internal/github.com/hyperledger/fabric-ca/lib","internal/github.com/hyperledger/fabric-ca/lib/client/credential","internal/github.com/hyperledger/fabric-ca/lib/client/credential/x509","internal/github.com/hyperledger/fabric-ca/lib/common","internal/github.com/hyperledger/fabric-ca/lib/streamer","internal/github.com/hyperledger/fabric-ca/lib/tls","internal/github.com/hyperledger/fabric-ca/sdkpatch/cryptosuitebridge","internal/github.com/hyperledger/fabric-ca/sdkpatch/logbridge","internal/github.com/hyperledger/fabric-ca/util","internal/github.com/hyperledger/fabric/bccsp","internal/github.com/hyperledger/fabric/bccsp/factory/sw","internal/github.com/hyperledger/fabric/bccsp/signer","internal/github.com/hyperledger/fabric/bccsp/sw","internal/github.com/hyperledger/fabric/bccsp/utils","internal/github.com/hyperledger/fabric/common/attrmgr","internal/github.com/hyperledger/fabric/common/channelconfig","internal/github.com/hyperledger/fabric/common/crypto","internal/github.com/hyperledger/fabric/common/ledger","internal/github.com/hyperledger/fabric/common/metrics","internal/github.com/hyperledger/fabric/common/metrics/disabled","internal/github.com/hyperledger/fabric/common/metrics/internal/namer","internal/github.com/hyperledger/fabric/common/metrics/prometheus","internal/github.com/hyperledger/fabric/common/metrics/statsd","internal/github.com/hyperledger/fabric/common/metrics/statsd/goruntime","internal/github.com/hyperledger/fabric/common/util","internal/github.com/hyperledger/fabric/core/comm","internal/github.com/hyperledger/fabric/core/common/privdata","internal/github.com/hyperledger/fabric/core/ledger","internal/github.com/hyperledger/fabric/core/middleware","internal/github.com/hyperledger/fabric/core/operations","internal/github.com/hyperledger/fabric/discovery/client","internal/github.com/hyperledger/fabric/msp","internal/github.com/hyperledger/fabric/protos/discovery","internal/github.com/hyperledger/fabric/protos/gossip","internal/github.com/hyperledger/fabric/protos/orderer","internal/github.com/hyperledger/fabric/sdkpatch/cryptosuitebridge","internal/github.com/hyperledger/fabric/sdkpatch/logbridge","internal/github.com/hyperledger/fabric/sdkpatch/logbridge/httpadmin","pkg/client/channel","pkg/client/channel/invoke","pkg/client/common/discovery","pkg/client/common/discovery/dynamicdiscovery","pkg/client/common/discovery/greylist","pkg/client/common/discovery/staticdiscovery","pkg/client/common/filter","pkg/client/common/random","pkg/client/common/selection/balancer","pkg/client/common/selection/dynamicselection","pkg/client/common/selection/dynamicselection/pgresolver","pkg/client/common/selection/fabricselection","pkg/client/common/selection/options","pkg/client/common/selection/sorter/balancedsorter","pkg/client/common/selection/sorter/blockheightsorter","pkg/client/common/verifier","pkg/common/errors/multi","pkg/common/errors/retry","pkg/common/errors/status","pkg/common/logging","pkg/common/options","pkg/common/providers/context","pkg/common/providers/core","pkg/common/providers/fab","pkg/common/providers/msp","pkg/common/providers/test/mockfab","pkg/context","pkg/core/config","pkg/core/config/comm","pkg/core/config/comm/tls","pkg/core/config/cryptoutil","pkg/core/config/endpoint","pkg/core/config/lookup","pkg/core/cryptosuite","pkg/core/cryptosuite/bccsp/sw","pkg/core/cryptosuite/bccsp/wrapper","pkg/core/logging/api","pkg/core/logging/metadata","pkg/core/logging/modlog","pkg/core/mocks","pkg/fab","pkg/fab/channel","pkg/fab/channel/membership","pkg/fab/chconfig","pkg/fab/comm","pkg/fab/discovery","pkg/fab/events/api","pkg/fab/events/client","pkg/fab/events/client/dispatcher","pkg/fab/events/client/lbp","pkg/fab/events/client/peerresolver","pkg/fab/events/client/peerresolver/balanced","pkg/fab/events/client/peerresolver/minblockheight","pkg/fab/events/client/peerresolver/preferorg","pkg/fab/events/deliverclient","pkg/fab/events/deliverclient/connection","pkg/fab/events/deliverclient/dispatcher","pkg/fab/events/deliverclient/seek","pkg/fab/events/endpoint","pkg/fab/events/service","pkg/fab/events/service/blockfilter","pkg/fab/events/service/dispatcher","pkg/fab/events/service/mocks","pkg/fab/keyvaluestore","pkg/fab/mocks","pkg/fab/orderer","pkg/fab/peer","pkg/fab/resource","pkg/fab/signingmgr","pkg/fab/txn","pkg/fabsdk","pkg/fabsdk/api","pkg/fabsdk/factory/defcore","pkg/fabsdk/factory/defmsp","pkg/fabsdk/factory/defsvc","pkg/fabsdk/metrics","pkg/fabsdk/metrics/cfg","pkg/fabsdk/provider/chpvdr","pkg/fabsdk/provider/fabpvdr","pkg/fabsdk/provider/msppvdr","pkg/msp","pkg/msp/api","pkg/msp/test/mockmsp","pkg/util/concurrent/futurevalue","pkg/util/concurrent/lazycache","pkg/util/concurrent/lazyref","pkg/util/concurrent/rollingcounter","pkg/util/pathvar","pkg/util/test","test/metadata","third_party/github.com/hyperledger/fabric/core/common/ccprovider","third_party/github.com/hyperledger/fabric/core/ledger/kvledger/txmgmt/rwsetutil","third_party/github.com/hyperledger/fabric/core/ledger/util","third_party/github.com/hyperledger/fabric/protos/common","third_party/github.com/hyperledger/fabric/protos/ledger/rwset","third_party/github.com/hyperledger/fabric/protos/ledger/rwset/kvrwset","third_party/github.com/hyperledger/fabric/protos/msp","third_party/github.com/hyperledger/fabric/protos/orderer","third_party/github.com/hyperledger/fabric/protos/peer","third_party/github.com/hyperledger/fabric/protos/token","third_party/github.com/hyperledger/fabric/protos/utils"]
+  revision = "0e710cebffe5674d411a625bc103ff0e266bb5e1"
+  version = "v1.0.0-alpha5"
+
+[[projects]]
+  name = "github.com/imdario/mergo"
+  packages = ["."]
+  revision = "7c29201646fa3de8506f701213473dd407f19646"
+  version = "v0.3.7"
 
 [[projects]]
   name = "github.com/inconshreveable/mousetrap"
@@ -189,7 +201,7 @@
 
 [[projects]]
   name = "github.com/prometheus/client_golang"
-  packages = ["prometheus","prometheus/internal","prometheus/promhttp"]
+  packages = ["prometheus","prometheus/internal"]
   revision = "4ab88e80c249ed361d3299e2930427d9ac43ef8d"
   version = "v1.0.0"
 
@@ -280,14 +292,14 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = ["context","http/httpguts","http2","http2/hpack","idna","internal/timeseries","trace"]
+  packages = ["context","http/httpguts","http2","http2/hpack","idna","internal/timeseries","publicsuffix","trace"]
   revision = "da137c7871d730100384dbcf36e6f8fa493aef5b"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["cpu","unix","windows"]
-  revision = "04f50cda93cbb67f2afa353c52f342100e80e625"
+  revision = "6ec70d6a5542cba804c6d16ebe8392601a0b7b60"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -299,13 +311,13 @@
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "eb59cef1c072c61ea4f7623910448d5e9c6a4455"
+  revision = "3bdd9d9f5532d75d09efb230bd767d265245cfe5"
 
 [[projects]]
   name = "google.golang.org/grpc"
-  packages = [".","balancer","balancer/base","balancer/roundrobin","binarylog/grpc_binarylog_v1","codes","connectivity","credentials","credentials/internal","encoding","encoding/proto","grpclog","internal","internal/backoff","internal/balancerload","internal/binarylog","internal/channelz","internal/envconfig","internal/grpcrand","internal/grpcsync","internal/syscall","internal/transport","keepalive","metadata","naming","peer","resolver","resolver/dns","resolver/passthrough","stats","status","tap"]
-  revision = "501c41df7f472c740d0674ff27122f3f48c80ce7"
-  version = "v1.21.1"
+  packages = [".","balancer","balancer/base","balancer/roundrobin","binarylog/grpc_binarylog_v1","codes","connectivity","credentials","credentials/internal","encoding","encoding/proto","grpclog","internal","internal/backoff","internal/balancerload","internal/binarylog","internal/channelz","internal/envconfig","internal/grpcrand","internal/grpcsync","internal/syscall","internal/transport","keepalive","metadata","naming","peer","resolver","resolver/dns","resolver/passthrough","serviceconfig","stats","status","tap"]
+  revision = "1d89a3c832915b2314551c1d2a506874d62e53f7"
+  version = "v1.22.0"
 
 [[projects]]
   name = "gopkg.in/gorp.v1"
@@ -322,6 +334,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f37f38e08ed93e9b32f90610891e8434d9523b9fa132601f78b7c0346150ce6a"
+  inputs-digest = "ff3af0c106e1e034a5dfc7cfa7ddfd7275d45671c8c6ab1a863e1878756c02b1"
   solver-name = "gps-cdcl"
   solver-version = 1

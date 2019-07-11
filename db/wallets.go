@@ -22,3 +22,11 @@ func (d *DB) UserWallets(ownerID uint64) ([]Wallet, error) {
 func (d *DB) CreateWallet(wallet *Wallet) error {
 	return d.db.Model(wallet).Insert()
 }
+
+func (d *DB) IsAllowed(address string, ownerID uint64) (err error) {
+	wallet := &Wallet{}
+	err = d.db.Select().
+		Where(dbx.HashExp{"public_key": address, "owner_id": ownerID}).
+		One(wallet)
+	return
+}

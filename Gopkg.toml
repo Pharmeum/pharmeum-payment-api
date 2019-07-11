@@ -38,12 +38,24 @@
   version = "4.0.2"
 
 [[constraint]]
+  name = "github.com/go-kivik/couchdb"
+  version = "1.8.1"
+
+[[constraint]]
+  name = "github.com/go-kivik/kivik"
+  version = "1.6.0"
+
+[[constraint]]
   name = "github.com/go-ozzo/ozzo-dbx"
   version = "1.1.0"
 
 [[constraint]]
+  name = "github.com/go-ozzo/ozzo-validation"
+  version = "3.5.0"
+
+[[constraint]]
   name = "github.com/hyperledger/fabric-sdk-go"
-  branch = "master"
+  version = "1.0.0-alpha4"
 
 [[constraint]]
   name = "github.com/lib/pq"

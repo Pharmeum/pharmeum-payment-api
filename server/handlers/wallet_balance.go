@@ -52,12 +52,8 @@ func (h WalletBalanceHandler) isAllowed(address string, ownerID uint64) (bool, e
 func (h WalletBalanceHandler) WalletBalance(w http.ResponseWriter, r *http.Request) {
 	log := h.Log.WithField("handler", "wallet_balance")
 
-	request := &WalletBalanceRequest{}
-	if err := json.NewDecoder(r.Body).Decode(request); err != nil {
-		log.WithError(err).Debug("failed to decode request")
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write(ErrResponse(http.StatusBadRequest, err))
-		return
+	request := &WalletBalanceRequest{
+		Address: r.URL.Query().Get("pk"),
 	}
 
 	if err := request.Validate(); err != nil {

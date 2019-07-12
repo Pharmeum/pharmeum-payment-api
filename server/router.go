@@ -75,6 +75,14 @@ func Router(
 			}
 			router.Get("/wallet_balance", handler.WalletBalance)
 		}
+		{
+			handler := handlers.PaymentHandler{
+				Log:   log,
+				DB:    db,
+				Payer: wallet.NewPayer(client, db),
+			}
+			router.Post("/payment", handler.Handle)
+		}
 	})
 
 	return router

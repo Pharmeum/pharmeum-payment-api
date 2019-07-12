@@ -9,6 +9,7 @@ import (
 const (
 	paymentChaincodeID = "pharmeumccpayment"
 	createWallet       = "create_wallet"
+	transferPayment    = "transfer_payment"
 )
 
 type Creator interface {

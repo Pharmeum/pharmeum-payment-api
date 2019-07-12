@@ -30,3 +30,11 @@ func (d *DB) IsAllowed(address string, ownerID uint64) (err error) {
 		One(wallet)
 	return
 }
+
+func (d *DB) Wallet(address string) (*Wallet, error) {
+	wallet := &Wallet{}
+	err := d.db.Select().
+		Where(dbx.HashExp{"public_key": address}).
+		One(wallet)
+	return wallet, err
+}
